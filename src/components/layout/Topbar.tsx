@@ -1,60 +1,138 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { useAuthStore } from "../../store/useAuthStore";
+import { useNavigate, NavLink } from "react-router-dom";
 import logo from "../../assets/logo.svg";
 
-interface Props {
-  onMenuClick: () => void;
-}
+export default function Topbar() {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
 
-export default function Topbar({ onMenuClick }: Props) {
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const roles = user?.roles || [];
+  const isAdmin = roles.includes("ADMIN");
+  const isSecretaria = roles.includes("SECRETARIA");
+
+  const rolActivo = isAdmin
+    ? "Administrador"
+    : isSecretaria
+    ? "Secretaría"
+    : "Usuario";
+
+  // 💡 Colores del neón según rol
+  const neonStyles =
+    isAdmin
+      ? "from-emerald-400 via-emerald-300 to-emerald-500 shadow-[0_0_15px_#10b981]"
+      : isSecretaria
+      ? "from-yellow-400 via-yellow-300 to-yellow-500 shadow-[0_0_15px_#facc15]"
+      : "from-slate-400 via-slate-300 to-slate-500 shadow-[0_0_15px_#94a3b8]";
+
   return (
-    <header className="h-14 border-b border-white/5 bg-[#171B22]/80 backdrop-blur flex items-center justify-between px-4 sm:px-6">
-      {/* Logo + Texto */}
+    <header className="relative flex items-center justify-between px-8 py-4 border-b border-white/10 bg-[#171B22]/90 backdrop-blur-md shadow-lg">
+      {/* Logo */}
       <div className="flex items-center gap-3">
-        {/* Botón hamburguesa (solo en mobile) */}
-        <button
-          onClick={onMenuClick}
-          className="sm:hidden p-2 rounded-lg hover:bg-white/10 text-slate-300"
+        <img src={logo} alt="logo" className="h-10 w-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" />
+        <h1 className="text-xl font-bold tracking-tight">
+          <span className="text-emerald-400">VIP</span>{" "}
+          <span className="text-slate-200">Center</span>{" "}
+          <span className="text-yellow-400">Fit</span>
+        </h1>
+      </div>
+
+      {/* Navegación */}
+      <nav className="flex items-center gap-8 text-sm font-medium">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive
+              ? "text-emerald-400"
+              : "text-slate-300 hover:text-white transition-colors"
+          }
         >
-          <Menu className="h-5 w-5" />
-        </button>
+          Inicio
+        </NavLink>
 
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="Logo VIP" className="h-9 w-9" />
-          <div className="font-semibold tracking-tight">
-            <span className="text-emerald-400">VIP</span>{" "}
-            <span className="text-slate-200">Center</span>{" "}
-            <span className="text-orange-400">Fit</span>
-          </div>
-        </div>
-      </div>
+        <NavLink
+          to="/asistencia"
+          className={({ isActive }) =>
+            isActive
+              ? "text-emerald-400"
+              : "text-slate-300 hover:text-white transition-colors"
+          }
+        >
+          Asistencia
+        </NavLink>
 
-      {/* Search */}
-      <div className="flex-1 max-w-3xl mx-4 hidden md:block">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            placeholder="Search.."
-            className="w-full h-10 rounded-lg bg-[#0F1318] border border-white/10 pl-9 pr-3 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
-          />
-        </div>
-      </div>
+        <NavLink
+          to="/suscripcion"
+          className={({ isActive }) =>
+            isActive
+              ? "text-emerald-400"
+              : "text-slate-300 hover:text-white transition-colors"
+          }
+        >
+          Suscripciones
+        </NavLink>
 
-      {/* Actions */}
-      <div className="flex items-center gap-4">
-        <button className="relative grid place-items-center h-9 w-9 rounded-lg bg-[#0F1318] border border-white/10 hover:bg-[#1F2430]">
-          <Bell className="h-5 w-5 text-slate-300" />
-          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-orange-500 text-[10px] grid place-items-center">
-            3
+        <NavLink
+          to="/clientes"
+          className={({ isActive }) =>
+            isActive
+              ? "text-emerald-400"
+              : "text-slate-300 hover:text-white transition-colors"
+          }
+        >
+          Clientes
+        </NavLink>
+
+        {/* Solo visible para ADMIN */}
+        {isAdmin && (
+          <NavLink
+            to="/reportes"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400"
+                : "text-slate-300 hover:text-orange-300 transition-colors"
+            }
+          >
+            Reportes
+          </NavLink>
+        )}
+      </nav>
+
+      {/* Usuario + Rol + Logout */}
+      <div className="flex items-center gap-5">
+        <div className="flex flex-col text-right">
+          <span className="text-sm text-slate-200 font-medium">
+            {user?.nombreCompleto || "Cargando..."}
           </span>
-        </button>
-        <div className="h-9 w-9 rounded-full overflow-hidden border border-white/10">
-          <img
-            alt="avatar"
-            className="h-full w-full object-cover"
-            src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?q=80&w=200&auto=format&fit=crop"
-          />
+          <span
+            className={`text-[11px] mt-0.5 px-2 py-0.5 rounded-full border ${
+              isAdmin
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                : isSecretaria
+                ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
+                : "bg-slate-600/20 text-slate-300 border-slate-500/40"
+            }`}
+          >
+            {rolActivo}
+          </span>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded text-sm font-medium shadow-md"
+        >
+          Cerrar sesión
+        </button>
       </div>
+
+      {/* 🔥 Franja neón animada bajo el Topbar */}
+      <div
+        className={`absolute bottom-0 left-0 w-full h-[3px] bg-gradient-to-r ${neonStyles} animate-slideGradient`}
+      ></div>
     </header>
   );
 }

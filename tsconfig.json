@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "jsx": "react-jsx",   // 👈 muy importante
+    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Node",
     "isolatedModules": true,
@@ -17,5 +17,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "src/types"]
+  "include": ["src"]
 }
