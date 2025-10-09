@@ -27,80 +27,93 @@ export default function Suscripcion() {
   const { clientes, selectedCliente, setSelectedCliente } = useClientesStore();
 
   return (
-    <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex gap-4">
-        <button
-          onClick={() => setModo("nueva")}
-          className={`px-4 py-2 rounded-lg font-medium ${
-            modo === "nueva"
-              ? "bg-emerald-600 text-white"
-              : "bg-[#0F1318] text-slate-300 hover:bg-[#1F2430]"
-          }`}
-        >
-          Nueva Suscripción
-        </button>
-        <button
-          onClick={() => setModo("renovar")}
-          className={`px-4 py-2 rounded-lg font-medium ${
-            modo === "renovar"
-              ? "bg-emerald-600 text-white"
-              : "bg-[#0F1318] text-slate-300 hover:bg-[#1F2430]"
-          }`}
-        >
-          Renovar Suscripción
-        </button>
+    <div className="max-w-5xl mx-auto space-y-4">
+      {/* Header compacto */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">Gestión de Suscripciones</h1>
+        
+        {/* Tabs minimalistas */}
+        <div className="flex gap-1 bg-[#0F1318] rounded p-1">
+          <button
+            onClick={() => setModo("nueva")}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition ${
+              modo === "nueva"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Nuevo Cliente
+          </button>
+          <button
+            onClick={() => setModo("renovar")}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition ${
+              modo === "renovar"
+                ? "bg-emerald-600 text-white"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Renovar Membresía
+          </button>
+        </div>
       </div>
 
-      {/* Selector de Cliente */}
-      <div>
-        <label className="text-slate-400 text-sm block mb-1">
-          Seleccionar Cliente
-        </label>
-        <select
-          className="w-80 rounded-lg bg-[#0F1318] border border-white/10 px-3 py-2 text-sm text-slate-200"
-          value={selectedCliente?.dni || ""}
-          onChange={(e) => {
-            const cliente = clientes.find((c) => c.dni === e.target.value);
-            if (cliente) setSelectedCliente(cliente);
-          }}
-        >
-          <option value="">-- Seleccionar --</option>
-          {clientes.map((c) => (
-            <option key={c.dni} value={c.dni}>
-              {c.nombre} - {c.dni}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Selector de Cliente - Solo visible en modo renovar */}
+      {modo === "renovar" && (
+        <div className="bg-[#0F1318] border border-white/10 rounded p-3">
+          <label className="text-slate-400 text-xs block mb-1.5">
+            Buscar Cliente
+          </label>
+          <select
+            className="w-full rounded bg-[#171B22] border border-white/10 px-3 py-1.5 text-sm text-slate-200"
+            value={selectedCliente?.dni || ""}
+            onChange={(e) => {
+              const cliente = clientes.find((c) => c.dni === e.target.value);
+              if (cliente) setSelectedCliente(cliente);
+            }}
+          >
+            <option value="">-- Seleccionar cliente existente --</option>
+            {clientes.map((c) => (
+              <option key={c.dni} value={c.dni}>
+                {c.nombre} - DNI: {c.dni} • Estado: {c.estado}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
-      {/* Bloques de Planes */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3 text-slate-200">
+      {/* Planes de Membresía - Grid compacto */}
+      <div className="bg-[#0F1318] border border-white/10 rounded p-4">
+        <h3 className="text-sm font-semibold mb-3 text-white">
           Seleccionar Membresía
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           {planes.map((plan) => (
-            <div
+            <button
               key={plan.nombre}
               onClick={() => setPlanSeleccionado(plan)}
-              className={`cursor-pointer p-4 rounded-lg border transition ${
+              className={`text-left p-3 rounded border transition ${
                 planSeleccionado.nombre === plan.nombre
-                  ? "border-emerald-500 bg-emerald-600/20"
-                  : "border-white/10 bg-[#0F1318] hover:bg-[#1F2430]"
+                  ? "border-emerald-500 bg-emerald-600/10"
+                  : "border-white/10 hover:border-emerald-500/50 hover:bg-[#171B22]"
               }`}
             >
-              <h4 className="text-lg font-semibold text-slate-100">
-                {plan.nombre}
-              </h4>
-              <p className="text-slate-400 text-sm mb-2">{plan.descripcion}</p>
-              <p className="text-green-400 font-bold">${plan.precio}</p>
-            </div>
+              <div className="flex items-start justify-between mb-1.5">
+                <h4 className="text-sm font-semibold text-white">
+                  {plan.nombre}
+                </h4>
+                <span className="text-emerald-400 font-bold text-sm">
+                  ${plan.precio}
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                {plan.descripcion}
+              </p>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Formulario según tab */}
+      {/* Formulario según modo */}
       {modo === "nueva" ? (
         <FormNueva planSeleccionado={planSeleccionado} />
       ) : (

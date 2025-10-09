@@ -19,7 +19,7 @@ export default function FormNueva({ planSeleccionado }: FormNuevaProps) {
 
   const handleGuardar = () => {
     if (!selectedCliente) return;
-    createSuscripcion(selectedCliente.dni, planSeleccionado.nombre as any);
+    createSuscripcion(selectedCliente.dni, planSeleccionado.nombre as "Básico" | "Premium" | "Anual");
   };
 
   const handleDownloadPDF = async () => {
@@ -45,52 +45,66 @@ export default function FormNueva({ planSeleccionado }: FormNuevaProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Bloque izquierdo - Formulario */}
-      <div className="space-y-6 bg-[#0F1318] p-6 rounded-lg border border-white/10">
-        <h2 className="text-lg font-semibold text-white mb-4">
-          Nueva Suscripción
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Bloque izquierdo - Formulario compacto */}
+      <div className="space-y-3 bg-[#0F1318] p-4 rounded border border-white/10">
+        <h2 className="text-sm font-semibold text-white border-b border-white/10 pb-2">
+          📋 Registro de Nuevo Cliente + Primer Pago
         </h2>
 
-        {/* Info del plan */}
-        <div className="bg-[#1F2430] p-4 rounded-lg border border-white/10">
-          <h3 className="text-slate-100 font-semibold">
-            {planSeleccionado.nombre}
-          </h3>
-          <p className="text-slate-400 text-sm mb-2">
+        {/* Resumen del plan seleccionado */}
+        <div className="bg-[#171B22] p-3 rounded border border-white/10">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-white font-semibold text-sm">
+              {planSeleccionado.nombre}
+            </h3>
+            <span className="text-emerald-400 font-bold text-sm">
+              ${planSeleccionado.precio}
+            </span>
+          </div>
+          <p className="text-slate-400 text-xs">
             {planSeleccionado.descripcion}
-          </p>
-          <p className="text-green-400 font-bold">
-            ${planSeleccionado.precio}
           </p>
         </div>
 
-        {/* Observaciones */}
+        {/* Campo de observaciones */}
         <div>
-          <label className="text-slate-400 text-sm block mb-1">
-            Observaciones / Descripción
+          <label className="text-slate-400 text-xs block mb-1">
+            Observaciones / Notas
           </label>
           <input
             type="text"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            className="w-full rounded-lg bg-[#0F1318] border border-white/10 px-3 py-2 text-sm text-slate-200"
-            placeholder="Ej. pago en efectivo, incluye promo, etc."
+            className="w-full rounded bg-[#171B22] border border-white/10 px-3 py-1.5 text-sm text-slate-200"
+            placeholder="Ej: Descuento estudiante, pago en efectivo..."
           />
         </div>
 
+        {/* Botón de acción */}
         <button
           onClick={handleGuardar}
-          className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-medium w-full"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded text-white text-sm font-medium w-full transition"
         >
-          Guardar Suscripción
+          💳 Registrar Cliente y Generar QR
         </button>
+
+        {/* Indicaciones del flujo */}
+        <div className="bg-blue-600/10 border border-blue-600/30 rounded p-3 text-xs text-blue-300 space-y-1">
+          <p className="font-semibold">📍 Flujo:</p>
+          <ol className="list-decimal list-inside space-y-0.5 text-[10px] text-slate-400">
+            <li>Cliente paga con Yape escaneando QR de pasarela</li>
+            <li>Sistema confirma pago vía webhook</li>
+            <li>Se genera QR único de acceso permanente</li>
+            <li>Cliente recibe su QR por WhatsApp/impreso</li>
+          </ol>
+        </div>
       </div>
 
-      {/* Bloque derecho - Recibo */}
+      {/* Bloque derecho - Vista previa del recibo */}
       <div>
         {selectedCliente ? (
-          <>
+          <div className="space-y-3">
             <div ref={reciboRef}>
               <Recibo
                 cliente={selectedCliente}
@@ -100,20 +114,20 @@ export default function FormNueva({ planSeleccionado }: FormNuevaProps) {
               />
             </div>
 
-            {/* Botón descargar PDF */}
-            <div className="mt-4 text-center">
-              <button
-                onClick={handleDownloadPDF}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium"
-              >
-                Descargar Recibo en PDF
-              </button>
-            </div>
-          </>
+            {/* Botón de descarga compacto */}
+            <button
+              onClick={handleDownloadPDF}
+              className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-medium transition"
+            >
+              📥 Descargar Recibo PDF
+            </button>
+          </div>
         ) : (
-          <p className="text-slate-400">
-            ⚠️ Selecciona un cliente para ver y descargar el recibo.
-          </p>
+          <div className="bg-[#0F1318] border border-white/10 rounded p-6 text-center">
+            <p className="text-slate-400 text-sm">
+              ⚠️ Selecciona un cliente para generar el recibo
+            </p>
+          </div>
         )}
       </div>
     </div>

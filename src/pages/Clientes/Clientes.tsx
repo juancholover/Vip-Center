@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   LineChart,
@@ -84,6 +84,20 @@ export default function Clientes() {
     }
   };
 
+  // 🧭 Filtro por tabs (declarar antes del useEffect que lo usa)
+  const filtrarClientes = useCallback((tab: string) => {
+    setActiveTab(tab as "todos" | "activos" | "vencidos" | "sin-membresia");
+    if (tab === "todos") {
+      setClientesFiltrados(clientes);
+    } else if (tab === "activos") {
+      setClientesFiltrados(clientes.filter((c) => c.estado === "activo"));
+    } else if (tab === "vencidos") {
+      setClientesFiltrados(clientes.filter((c) => c.estado === "vencido"));
+    } else if (tab === "sin-membresia") {
+      setClientesFiltrados(clientes.filter((c) => c.estado === "sin_membresia"));
+    }
+  }, [clientes]);
+
   useEffect(() => {
     cargarClientes();
   }, []);
@@ -103,21 +117,7 @@ export default function Clientes() {
       );
     });
     setClientesFiltrados(filtrados);
-  }, [search, clientes, activeTab]);
-
-  // 🧭 Filtro por tabs
-  const filtrarClientes = (tab: string) => {
-    setActiveTab(tab as any);
-    if (tab === "todos") {
-      setClientesFiltrados(clientes);
-    } else if (tab === "activos") {
-      setClientesFiltrados(clientes.filter((c) => c.estado === "activo"));
-    } else if (tab === "vencidos") {
-      setClientesFiltrados(clientes.filter((c) => c.estado === "vencido"));
-    } else if (tab === "sin-membresia") {
-      setClientesFiltrados(clientes.filter((c) => c.estado === "sin_membresia"));
-    }
-  };
+  }, [search, clientes, activeTab, filtrarClientes]);
 
   // 🔁 Regenerar QR
   const handleRegenerarQr = async (id: number) => {

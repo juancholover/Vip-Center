@@ -6,14 +6,15 @@ export default function Topbar() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout(); // Ahora es async, invalida token en backend
     navigate("/login");
   };
 
   const roles = user?.roles || [];
-  const isAdmin = roles.includes("ADMIN");
-  const isSecretaria = roles.includes("SECRETARIA");
+  // ✅ Backend usa nombres en minúscula: "admin", "secretaria", etc.
+  const isAdmin = roles.some((r: string) => r.toLowerCase() === "admin");
+  const isSecretaria = roles.some((r: string) => r.toLowerCase() === "secretaria");
 
   const rolActivo = isAdmin
     ? "Administrador"
@@ -89,24 +90,48 @@ export default function Topbar() {
 
         {/* Solo visible para ADMIN */}
         {isAdmin && (
-          <NavLink
-            to="/reportes"
-            className={({ isActive }) =>
-              isActive
-                ? "text-orange-400"
-                : "text-slate-300 hover:text-orange-300 transition-colors"
-            }
-          >
-            Reportes
-          </NavLink>
+          <>
+            <NavLink
+              to="/empleados"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-purple-400"
+                  : "text-slate-300 hover:text-purple-300 transition-colors"
+              }
+            >
+              Empleados
+            </NavLink>
+            <NavLink
+              to="/reportes"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-orange-400"
+                  : "text-slate-300 hover:text-orange-300 transition-colors"
+              }
+            >
+              Reportes
+            </NavLink>
+          </>
         )}
+
+        {/* Perfil disponible para todos */}
+        <NavLink
+          to="/perfil"
+          className={({ isActive }) =>
+            isActive
+              ? "text-blue-400"
+              : "text-slate-300 hover:text-blue-300 transition-colors"
+          }
+        >
+          Mi Perfil
+        </NavLink>
       </nav>
 
       {/* Usuario + Rol + Logout */}
       <div className="flex items-center gap-5">
         <div className="flex flex-col text-right">
           <span className="text-sm text-slate-200 font-medium">
-            {user?.nombreCompleto || "Cargando..."}
+            {user ? `${user.nombre} ${user.apellido}` : "Cargando..."}
           </span>
           <span
             className={`text-[11px] mt-0.5 px-2 py-0.5 rounded-full border ${

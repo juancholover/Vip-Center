@@ -2,23 +2,38 @@ import { useState } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { loginRequest } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import logo from "../../assets/logo.svg";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(""); // Limpiar errores previos
+    
     try {
       const data = await loginRequest({ email, password });
       login(data);
+      
+      // ✅ SIEMPRE IR AL DASHBOARD (la notificación se mostrará dentro si debe cambiar contraseña)
       navigate("/");
-    } catch {
-      setError("Credenciales incorrectas o usuario inactivo");
+    } catch (err: unknown) {
+      // Manejo de errores específicos
+      const error = err as { response?: { status?: number; data?: { minutosRestantes?: number } } };
+      if (error.response?.status === 403) {
+        const minutosRestantes = error.response?.data?.minutosRestantes || 0;
+        setError(`Cuenta bloqueada por múltiples intentos. Intente en ${minutosRestantes} minutos.`);
+      } else if (error.response?.status === 401) {
+        setError("Credenciales incorrectas");
+      } else {
+        setError("Error al iniciar sesión. Intente nuevamente.");
+      }
     }
   };
 
@@ -44,13 +59,23 @@ export default function Login() {
         />
 
         <label className="block text-sm mb-2">Contraseña</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 rounded bg-[#0F1318] border border-white/10 mb-6 text-sm"
-          required
-        />
+        <div className="relative mb-6">
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 pr-10 rounded bg-[#0F1318] border border-white/10 text-sm"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
 
         {error && (
           <p className="text-red-400 text-xs mb-3 text-center">{error}</p>

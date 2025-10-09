@@ -6,10 +6,15 @@ import { Toaster } from "react-hot-toast";
 
 // Páginas
 import Login from "./pages/Auth/Login";
+import ChangePassword from "./pages/Auth/ChangePassword";
 import Home from "./pages/Home";
 import Asistencia from "./pages/Asistencia/Asistencia";
 import Suscripcion from "./pages/Suscripcion/Suscripcion";
 import Clientes from "./pages/Clientes/Clientes";
+
+// Empleados
+import Empleados from "./pages/Empleados/Empleados";
+import Perfil from "./pages/Empleados/Perfil";
 
 // Reportes
 import IngresosReport from "./pages/Reportes/IngresosReport";
@@ -42,6 +47,16 @@ export default function App() {
       <Routes>
         {/* Login libre */}
         <Route path="/login" element={<Login />} />
+        
+        {/* Cambio de contraseña (requiere autenticación) */}
+        <Route 
+          path="/change-password" 
+          element={
+            <ProtectedRoute>
+              <ChangePassword />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Layout protegido */}
         <Route
@@ -56,6 +71,14 @@ export default function App() {
           <Route path="asistencia" element={<Asistencia />} />
           <Route path="suscripcion" element={<Suscripcion />} />
           <Route path="clientes" element={<Clientes />} />
+          
+          {/* Empleados (solo admin) - Usa modales, sin sub-rutas */}
+          <Route path="empleados" element={<Empleados />} />
+          
+          {/* Perfil (todos los usuarios) */}
+          <Route path="perfil" element={<Perfil />} />
+          
+          {/* Reportes */}
           <Route path="reportes/ingresos" element={<IngresosReport />} />
         </Route>
 

@@ -69,7 +69,7 @@ export default function ClienteForm({ cliente, onClose, onSuccess }: Props) {
       }
       await onSuccess(); // recargar tabla
       onClose();
-    } catch (err) {
+    } catch {
       toast.error("Error al guardar el cliente");
     } finally {
       setLoading(false);
