@@ -1,64 +1,44 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "./store/useAuthStore";
-import { useEffect } from "react";
-import Layout from "./components/layout/Layout";
 import { Toaster } from "react-hot-toast";
-
-// Páginas
+import Layout from "./components/layout/Layout";
 import Login from "./pages/Auth/Login";
 import ChangePassword from "./pages/Auth/ChangePassword";
 import Home from "./pages/Home";
-import Asistencia from "./pages/Asistencia/Asistencia";
+import AsistenciaModule from "./pages/Asistencia/Asistencia";
+import CheckIn from "./pages/Asistencia/CheckIn";
 import Suscripcion from "./pages/Suscripcion/Suscripcion";
 import Clientes from "./pages/Clientes/Clientes";
-
-// Empleados
 import Empleados from "./pages/Empleados/Empleados";
 import Perfil from "./pages/Empleados/Perfil";
-
-// Reportes
+import MiHistorial from "./pages/Empleados/MiHistorial";
+import Reportes from "./pages/Reportes/Reportes";
 import IngresosReport from "./pages/Reportes/IngresosReport";
-
-function ProtectedRoute({ children }: { children: React.ReactElement }) {
-  const { user, loading, loadSession } = useAuthStore();
-
-  useEffect(() => {
-    loadSession();
-  }, [loadSession]);
-
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#0F1318] text-white">
-        <div className="flex flex-col items-center">
-          <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm text-slate-400 animate-pulse">Verificando sesión...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) return <Navigate to="/login" replace />;
-  return children;
-}
+import GestionMembresias from "./pages/Membresias/GestionMembresias";
+import NotificacionesConfig from "./pages/Configuracion/NotificacionesConfig";
+import { ProtectedRoute } from "./ProtectedRoute";
+import { Notification } from "./components/Notification";
 
 export default function App() {
   return (
     <>
       <Routes>
-        {/* Login libre */}
+        {/* 🔓 Público */}
         <Route path="/login" element={<Login />} />
         
-        {/* Cambio de contraseña (requiere autenticación) */}
-        <Route 
-          path="/change-password" 
+        {/* 🔓 Check-in de asistencia (público para clientes) */}
+        <Route path="/asistencia/check-in" element={<CheckIn />} />
+
+        {/* 🔐 Cambiar contraseña */}
+        <Route
+          path="/change-password"
           element={
             <ProtectedRoute>
               <ChangePassword />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        {/* Layout protegido */}
+        {/* 🧱 Layout principal (todas las rutas protegidas) */}
         <Route
           path="/"
           element={
@@ -68,28 +48,70 @@ export default function App() {
           }
         >
           <Route index element={<Home />} />
-          <Route path="asistencia" element={<Asistencia />} />
+          <Route path="asistencia" element={<AsistenciaModule />} />
           <Route path="suscripcion" element={<Suscripcion />} />
           <Route path="clientes" element={<Clientes />} />
-          
-          {/* Empleados (solo admin) - Usa modales, sin sub-rutas */}
-          <Route path="empleados" element={<Empleados />} />
-          
-          {/* Perfil (todos los usuarios) */}
           <Route path="perfil" element={<Perfil />} />
-          
-          {/* Reportes */}
-          <Route path="reportes/ingresos" element={<IngresosReport />} />
+          <Route path="mi-historial" element={<MiHistorial />} />
+
+          <Route
+            path="empleados"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <Empleados />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="membresias"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <GestionMembresias />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reportes"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
+                <Reportes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reportes/ingresos"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <IngresosReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="configuracion/notificaciones"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <NotificacionesConfig />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
-        {/* Redirección global */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      
+
+      {/* ✅ Notificación animada global */}
+      <Notification />
+
+      {/* 🔔 Toast global existente */}
       <Toaster
         position="top-right"
         toastOptions={{
-          style: { background: "#171B22", color: "#fff" },
+          style: {
+            background: "#171B22",
+            color: "#fff",
+            border: "1px solid #22C55E33",
+            fontSize: "0.9rem",
+          },
         }}
       />
     </>

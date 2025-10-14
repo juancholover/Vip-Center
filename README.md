@@ -71,3 +71,19 @@ export default defineConfig([
   },
 ])
 ```
+
+## Documentación de Pagos y Notificaciones
+
+Se añadió una guía detallada sobre la integración de pagos con Yape (MercadoPago), notificaciones (email + SMS) y el flujo de reembolsos:
+
+- `docs/PAGOS_YAPE_NOTIFICACIONES.md` - Guía completa de integración
+- `docs/CONFIGURACION_YAPE.md` - Configuración específica para Yape
+- `docs/MODO_PRUEBA_QR.md` - 🧪 Configuración para pruebas con QR
+- `docs/QR_AMPLIABLE.md` - 📲 Funcionalidad de QR clickeable y ampliable
+- `docs/FORMULARIO_MEJORADO.md` - 📋 Campos adicionales y validaciones
+- `docs/INTEGRACION_BACKEND.md` - 🔌 Guía de integración con backend existente
+- `docs/SISTEMA_QR_ASISTENCIA.md` - 📲 Sistema completo de asistencias con QR
+- `docs/BACKEND_ASISTENCIA_GUIA.md` - 🔧 Guía técnica de backend para asistencias
+- `docs/INICIO_RAPIDO_ASISTENCIAS.md` - ⚡ Inicio rápido en 3 pasos
+- `docs/RESUMEN_IMPLEMENTACION_ASISTENCIAS.md` - 📋 Resumen ejecutivo completo
+

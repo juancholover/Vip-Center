@@ -18,11 +18,19 @@ export default function Login() {
     setError(""); // Limpiar errores previos
     
     try {
-      const data = await loginRequest({ email, password });
-      login(data);
-      
-      // ✅ SIEMPRE IR AL DASHBOARD (la notificación se mostrará dentro si debe cambiar contraseña)
-      navigate("/");
+     const data = await loginRequest({ email, password });
+
+// Guardar sesión global
+login(data);
+
+// ✅ Si el usuario debe cambiar su contraseña, redirigirlo al componente de cambio
+if (data.debeCambiarPassword) {
+  console.warn("⚠️ Usuario debe cambiar su contraseña antes de continuar");
+  navigate("/cambiar-password");
+} else {
+  // ✅ Ir al dashboard principal
+  navigate("/");
+}
     } catch (err: unknown) {
       // Manejo de errores específicos
       const error = err as { response?: { status?: number; data?: { minutosRestantes?: number } } };

@@ -1,19 +1,21 @@
-import { axiosClient } from "./axiosClient";
+import { axiosClient } from "../api/axiosClient";
 
-// 🔐 Tipos para TypeScript
+// ===============================
+// 📘 Tipos para TypeScript
+// ===============================
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
-  userId: number;
+  tokenType?: string;
+  expiresIn?: number;
+  userId?: number;
   email: string;
   nombre: string;
   apellido: string;
   telefono?: string;
   roles: string[];
-  permisos: string[];
-  debeCambiarPassword: boolean; // ⚠️ FLAG CRÍTICO
+  permisos?: string[];
+  debeCambiarPassword: boolean;
 }
 
 export interface CambiarPasswordRequest {
@@ -27,38 +29,86 @@ export interface ActualizarPasswordRequest {
   confirmarPassword: string;
 }
 
-// 🔹 Login
+// ===============================
+// 🔐 LOGIN
+// ===============================
 export async function loginRequest(credentials: { email: string; password: string }): Promise<LoginResponse> {
-  const res = await axiosClient.post<LoginResponse>("/api/auth/login", credentials);
-  return res.data;
+  try {
+    const res = await axiosClient.post<LoginResponse>("/auth/login", credentials);
+    return res.data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("❌ Error en login:", msg);
+    throw err;
+  }
 }
 
-// 🔹 Refresh Token
+// ===============================
+// 🔁 REFRESH TOKEN
+// ===============================
 export async function refreshRequest(refreshToken: string): Promise<LoginResponse> {
-  const res = await axiosClient.post<LoginResponse>("/api/auth/refresh", { refreshToken });
-  return res.data;
+  try {
+    const res = await axiosClient.post<LoginResponse>("/auth/refresh", { refreshToken });
+    return res.data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("⚠️ Error al refrescar token:", msg);
+    throw err;
+  }
 }
 
-// 🔹 Cambiar contraseña obligatoria (primer login)
+// ===============================
+// 🔑 CAMBIO DE CONTRASEÑA OBLIGATORIO
+// ===============================
 export async function cambiarPasswordRequest(data: CambiarPasswordRequest) {
-  const res = await axiosClient.post("/api/auth/change-password", data);
-  return res.data;
+  try {
+    const res = await axiosClient.post("/auth/change-password", data);
+    return res.data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("❌ Error al cambiar contraseña:", msg);
+    throw err;
+  }
 }
 
-// 🔹 Actualizar contraseña personal
+// ===============================
+// 🔒 ACTUALIZAR CONTRASEÑA MANUAL (perfil)
+// ===============================
 export async function actualizarPasswordRequest(data: ActualizarPasswordRequest) {
-  const res = await axiosClient.post("/api/auth/update-password", data);
-  return res.data;
+  try {
+    const res = await axiosClient.post("/auth/update-password", data);
+    return res.data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("❌ Error al actualizar contraseña:", msg);
+    throw err;
+  }
 }
 
-// 🔹 Logout
+// ===============================
+// 🚪 LOGOUT (invalida refresh token en backend)
+// ===============================
 export async function logoutRequest() {
-  const res = await axiosClient.post("/api/auth/logout");
-  return res.data;
+  try {
+    const res = await axiosClient.post("/auth/logout");
+    return res.data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("⚠️ Error al cerrar sesión:", msg);
+    throw err;
+  }
 }
 
-// 🔹 Obtener perfil actual
+// ===============================
+// 🙋 PERFIL ACTUAL (me)
+// ===============================
 export async function getMeRequest() {
-  const res = await axiosClient.get("/api/auth/me");
-  return res.data;
+  try {
+    const res = await axiosClient.get("/auth/me");
+    return res.data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("⚠️ Error al obtener perfil:", msg);
+    throw err;
+  }
 }

@@ -1,15 +1,18 @@
 import { create } from "zustand";
 import { refreshRequest, logoutRequest, LoginResponse } from "../api/authApi";
+import { axiosClient } from "../api/axiosClient";
+
+interface UserData {
+  email: string;
+  nombre: string;
+  apellido: string;
+  telefono?: string;
+  roles: string[];
+  debeCambiarPassword: boolean;
+}
 
 interface AuthState {
-  user: { 
-    email: string; 
-    nombre: string;
-    apellido: string;
-    telefono?: string;
-    roles: string[];
-    debeCambiarPassword: boolean; // ⚠️ Nuevo campo
-  } | null;
+  user: UserData | null;
   accessToken: string | null;
   refreshToken: string | null;
   loading: boolean;
@@ -17,9 +20,11 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshSession: () => Promise<string | null>;
   loadSession: () => Promise<void>;
-  updateDebeCambiarPassword: (value: boolean) => void; // ⚠️ Nuevo método
-  updateUserProfile: (nombre: string, apellido: string, email: string, telefono?: string) => void; // ⚠️ NUEVO: actualizar perfil
+  updateDebeCambiarPassword: (value: boolean) => void;
+  updateUserProfile: (nombre: string, apellido: string, email: string, telefono?: string) => void;
 }
+
+let isLoggingOut = false;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -27,57 +32,105 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   refreshToken: null,
   loading: true,
 
+  // ===============================
+  // 🔐 LOGIN PRINCIPAL
+  // ===============================
   login: (data) => {
+    const userInfo = {
+      email: data.email,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      telefono: data.telefono,
+      roles: Array.from(data.roles || []),
+      debeCambiarPassword: data.debeCambiarPassword || false,
+    };
+
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("refreshToken", data.refreshToken);
-    localStorage.setItem("user", JSON.stringify(data));
+    localStorage.setItem("user", JSON.stringify(userInfo));
+
+    // Actualizar axios inmediatamente
+    axiosClient.defaults.headers.Authorization = `Bearer ${data.accessToken}`;
+
     set({
-      user: {
-        email: data.email,
-        nombre: data.nombre,
-        apellido: data.apellido,
-        telefono: data.telefono,
-        roles: Array.from(data.roles),
-        debeCambiarPassword: data.debeCambiarPassword || false, // ⚠️ Guardar flag
-      },
+      user: userInfo,
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       loading: false,
     });
   },
 
+  // ===============================
+  // 🚪 LOGOUT GLOBAL SEGURO
+  // ===============================
   logout: async () => {
+    if (isLoggingOut) return;
+    isLoggingOut = true;
+
     try {
-      // Intentar invalidar token en backend
       await logoutRequest();
     } catch (error) {
       console.error("Error al hacer logout:", error);
     } finally {
-      // Limpiar localStorage siempre
       localStorage.clear();
+      axiosClient.defaults.headers.Authorization = "";
       set({ user: null, accessToken: null, refreshToken: null, loading: false });
+      isLoggingOut = false;
     }
   },
 
+  // ===============================
+  // ♻️ REFRESH DE SESIÓN AUTOMÁTICO
+  // ===============================
   refreshSession: async () => {
-    const refreshToken = get().refreshToken;
+    const { refreshToken, logout } = get();
     if (!refreshToken) return null;
+
     try {
-      const data = await refreshRequest(refreshToken);
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      const res = await refreshRequest(refreshToken);
+
+      if (!res?.accessToken) {
+        console.warn("⚠️ Respuesta inválida del backend, cerrando sesión.");
+        await logout();
+        return null;
+      }
+
+      // ✅ Actualizar tokens y usuario
+      const userInfo = {
+        email: res.email,
+        nombre: res.nombre,
+        apellido: res.apellido,
+        telefono: res.telefono,
+        roles: Array.from(res.roles || []),
+        debeCambiarPassword: res.debeCambiarPassword || false,
+      };
+
+      localStorage.setItem("accessToken", res.accessToken);
+      localStorage.setItem("refreshToken", res.refreshToken);
+      localStorage.setItem("user", JSON.stringify(userInfo));
+
+      // Actualizar axios con el nuevo token
+      axiosClient.defaults.headers.Authorization = `Bearer ${res.accessToken}`;
+
       set({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        user: userInfo,
+        accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
       });
-      return data.accessToken;
-    } catch {
-      get().logout();
+
+      console.info("✅ Sesión renovada automáticamente");
+      return res.accessToken;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("❌ Error al refrescar sesión:", msg);
+      await logout();
       return null;
     }
   },
 
-  // ✅ Cargar sesión guardada (sin refrescar automáticamente)
+  // ===============================
+  // 🧠 CARGAR SESIÓN DESDE LOCALSTORAGE
+  // ===============================
   loadSession: async () => {
     const token = localStorage.getItem("accessToken");
     const refresh = localStorage.getItem("refreshToken");
@@ -86,25 +139,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (token && refresh && userData) {
       try {
         const parsed = JSON.parse(userData);
+
+        // Configurar axios con token
+        axiosClient.defaults.headers.Authorization = `Bearer ${token}`;
+
         set({
-          user: {
-            ...parsed,
-            debeCambiarPassword: parsed.debeCambiarPassword || false,
-          },
+          user: parsed,
           accessToken: token,
           refreshToken: refresh,
           loading: false,
         });
-        // ⚠️ NO refrescar automáticamente - solo cuando sea necesario (401)
       } catch {
-        get().logout();
+        console.warn("⚠️ Datos corruptos en localStorage, cerrando sesión.");
+        await get().logout();
       }
     } else {
       set({ loading: false });
     }
   },
 
-  // ⚠️ Actualizar flag de cambio de contraseña
+  // ===============================
+  // 🔄 ACTUALIZAR FLAG debeCambiarPassword
+  // ===============================
   updateDebeCambiarPassword: (value: boolean) => {
     const currentUser = get().user;
     if (currentUser) {
@@ -114,17 +170,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // ⚠️ NUEVO: Actualizar datos del perfil del usuario
-  updateUserProfile: (nombre: string, apellido: string, email: string, telefono?: string) => {
+  // ===============================
+  // 🧍 ACTUALIZAR PERFIL DE USUARIO
+  // ===============================
+  updateUserProfile: (nombre, apellido, email, telefono) => {
     const currentUser = get().user;
     if (currentUser) {
-      const updatedUser = { 
-        ...currentUser, 
-        nombre,
-        apellido,
-        email,
-        telefono 
-      };
+      const updatedUser = { ...currentUser, nombre, apellido, email, telefono };
       set({ user: updatedUser });
       localStorage.setItem("user", JSON.stringify(updatedUser));
     }

@@ -102,6 +102,16 @@ export default function Topbar() {
               Empleados
             </NavLink>
             <NavLink
+              to="/membresias"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-cyan-400"
+                  : "text-slate-300 hover:text-cyan-300 transition-colors"
+              }
+            >
+              Membresías
+            </NavLink>
+            <NavLink
               to="/reportes"
               className={({ isActive }) =>
                 isActive
@@ -110,6 +120,16 @@ export default function Topbar() {
               }
             >
               Reportes
+            </NavLink>
+            <NavLink
+              to="/configuracion/notificaciones"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-pink-400"
+                  : "text-slate-300 hover:text-pink-300 transition-colors"
+              }
+            >
+              Configuración
             </NavLink>
           </>
         )}
@@ -124,6 +144,18 @@ export default function Topbar() {
           }
         >
           Mi Perfil
+        </NavLink>
+
+        {/* Historial disponible para todos */}
+        <NavLink
+          to="/mi-historial"
+          className={({ isActive }) =>
+            isActive
+              ? "text-teal-400"
+              : "text-slate-300 hover:text-teal-300 transition-colors"
+          }
+        >
+          Mi Historial
         </NavLink>
       </nav>
 

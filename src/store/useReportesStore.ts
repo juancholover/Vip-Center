@@ -26,7 +26,6 @@ export interface Asistencia {
 const fmt = (n: number) =>
   n.toLocaleString("es-PE", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
-const today = new Date();
 const daysAgo = (d: number) => {
   const t = new Date();
   t.setDate(t.getDate() - d);
@@ -47,7 +46,7 @@ const pagosSeed: Pago[] = [
   { id: "p10",fechaISO: daysAgo(25), clienteNombre: "Luis Cárdenas",    clienteDni: "70999999", plan: "Básico",  metodo: "Efectivo",     monto: 50,  estado: "Cancelado"   },
 ];
 
-const asistenciasSeed: Asistencia[] = Array.from({ length: 120 }).map((_, i) => ({
+const asistenciasSeed: Asistencia[] = Array.from({ length: 120 }).map(() => ({
   fechaISO: daysAgo(Math.floor(Math.random() * 30)),
   clienteNombre: ["Carlos Mendoza","María González","Roberto Silva","Ana Rodríguez","Diego Morales","Laura Torres"][Math.floor(Math.random()*6)],
   clienteDni: String(70000000 + Math.floor(Math.random()*999999)),
@@ -148,9 +147,9 @@ export const useReportesStore = create<ReportesState>(() => ({
   ]),
   proximasAVencer: () => ([
     { cliente:"María Rodríguez", plan:"VIP" as Plan,    venceEnDias: 5,  estado:"Por vencer" },
-    { cliente:"Juan López",      plan:"Mensual" as any, venceEnDias: 9,  estado:"Por vencer" },
-    { cliente:"Ana Sánchez",     plan:"Anual",          venceEnDias: 12, estado:"Por vencer" },
-    { cliente:"Carlos Martín",   plan:"Clases" as any,  venceEnDias: 14, estado:"Por vencer" },
+  { cliente:"Juan López",      plan:"Básico", venceEnDias: 9,  estado:"Por vencer" },
+  { cliente:"Ana Sánchez",     plan:"Anual",  venceEnDias: 12, estado:"Por vencer" },
+  { cliente:"Carlos Martín",   plan:"Básico",  venceEnDias: 14, estado:"Por vencer" },
   ]),
   distribucionTiposMembresia: () => ([
     { name:"Básico",  value: 45 },

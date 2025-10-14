@@ -22,6 +22,7 @@ import {
   Search,
   RefreshCcw,
   Eye,
+  QrCode,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ClientesApi, type Cliente } from "../../api/clientesApi";
@@ -102,6 +103,32 @@ export default function Clientes() {
     cargarClientes();
   }, []);
 
+  // 🔔 Escuchar evento de nueva asistencia para actualizar "Última Asistencia"
+  useEffect(() => {
+    const handleNuevaAsistencia = (event: Event) => {
+      console.log("🔔 Nueva asistencia detectada, recargando clientes...");
+      
+      // Mostrar toast con el nombre del cliente si está disponible
+      const customEvent = event as CustomEvent;
+      const clienteNombre = customEvent.detail?.clienteNombre;
+      
+      if (clienteNombre) {
+        toast.success(`✅ ${clienteNombre} registró asistencia`, {
+          duration: 3000,
+        });
+      }
+      
+      // Recargar clientes para obtener ultimaAsistencia actualizada
+      cargarClientes();
+    };
+
+    window.addEventListener("asistencia-registrada", handleNuevaAsistencia);
+    
+    return () => {
+      window.removeEventListener("asistencia-registrada", handleNuevaAsistencia);
+    };
+  }, []);
+
   // 🔍 Búsqueda
   useEffect(() => {
     if (!search.trim()) {
@@ -118,6 +145,31 @@ export default function Clientes() {
     });
     setClientesFiltrados(filtrados);
   }, [search, clientes, activeTab, filtrarClientes]);
+
+  // 📅 Formatear fecha de última asistencia
+  const formatearFechaAsistencia = (fechaISO: string): string => {
+    const fecha = new Date(fechaISO);
+    const hoy = new Date();
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
+
+    const esHoy = fecha.toDateString() === hoy.toDateString();
+    const esAyer = fecha.toDateString() === ayer.toDateString();
+
+    const hora = fecha.toLocaleTimeString("es-PE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (esHoy) return `Hoy - ${hora}`;
+    if (esAyer) return `Ayer - ${hora}`;
+    
+    return fecha.toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   // 🔁 Regenerar QR
   const handleRegenerarQr = async (id: number) => {
@@ -142,7 +194,7 @@ export default function Clientes() {
 
   return (
     <motion.div
-      className="p-6 text-white space-y-6"
+      className="p-5 text-white space-y-5"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
@@ -158,20 +210,51 @@ export default function Clientes() {
           </p>
         </div>
 
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, teléfono o DNI..."
-            className="w-full bg-[#0F1318] border border-white/10 focus:border-emerald-500 outline-none rounded-full pl-9 pr-3 py-2 text-sm text-slate-300 placeholder-slate-500 transition-all"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative w-72">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, teléfono o DNI..."
+              className="w-full bg-[#0F1318] border border-white/10 focus:border-emerald-500 outline-none rounded-full pl-9 pr-3 py-2 text-sm text-slate-300 placeholder-slate-500 transition-all"
+            />
+          </div>
+
+          {/* Botón Forzar Refresh */}
+          <button
+            onClick={() => {
+              toast.loading("Actualizando clientes...", { id: "force-refresh-clientes" });
+              cargarClientes().finally(() => {
+                toast.dismiss("force-refresh-clientes");
+                toast.success("Clientes actualizados", { duration: 2000 });
+              });
+            }}
+            disabled={loading}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              loading
+                ? "bg-orange-700/60 cursor-not-allowed"
+                : "bg-orange-600 hover:bg-orange-500"
+            } text-white text-sm`}
+            title="Forzar actualización de clientes"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Actualizando..." : "Refrescar"}
+          </button>
         </div>
       </div>
 
+      {/* Indicador de actualización */}
+      {loading && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 flex items-center gap-3 animate-pulse">
+          <RefreshCcw className="w-5 h-5 text-emerald-400 animate-spin" />
+          <span className="text-emerald-400 font-medium">Actualizando lista de clientes...</span>
+        </div>
+      )}
+
       {/* 📊 Tarjetas */}
-      <div className="grid grid-cols-6 gap-4">
+  <div className="grid grid-cols-6 gap-3.5">
         {[
           { title: "Total de Clientes", value: metricas.total, color: "emerald", icon: Users },
           { title: "Clientes Nuevos", value: metricas.nuevos, color: "blue", icon: UserPlus },
@@ -183,7 +266,7 @@ export default function Clientes() {
           <motion.div
             key={title}
             whileHover={{ scale: 1.02 }}
-            className={`bg-[#1A1F25] p-4 rounded-xl border border-${color}-500/30 hover:border-${color}-400/50 transition-all`}
+            className={`bg-[#1A1F25] p-3.5 rounded-xl border border-${color}-500/30 hover:border-${color}-400/50 transition-all`}
           >
             <div className="flex justify-between items-center mb-2">
               <span className="text-slate-400 text-sm">{title}</span>
@@ -206,7 +289,7 @@ export default function Clientes() {
             key={tab.id}
             onClick={() => filtrarClientes(tab.id)}
             whileTap={{ scale: 0.96 }}
-            className={`px-4 py-1.5 rounded-full text-sm border transition-all ${
+            className={`px-3 py-1 rounded-full text-sm border transition-all ${
               activeTab === tab.id
                 ? "bg-emerald-600/30 border-emerald-500 text-emerald-300"
                 : "bg-transparent border-white/10 text-slate-400 hover:bg-white/5"
@@ -218,7 +301,7 @@ export default function Clientes() {
       </div>
 
       {/* 📋 Tabla */}
-      <div className="bg-[#1A1F25] p-4 rounded-xl border border-white/10">
+  <div className="bg-[#1A1F25] p-3 rounded-xl border border-white/10">
         {loading ? (
           <p className="text-slate-400 text-center py-6">Cargando...</p>
         ) : clientesFiltrados.length === 0 ? (
@@ -229,55 +312,87 @@ export default function Clientes() {
           <table className="w-full text-sm border-collapse">
             <thead className="text-slate-400 border-b border-slate-700">
               <tr>
-                <th className="p-2 text-left">Cliente</th>
-                <th className="p-2 text-left">Teléfono</th>
-                <th className="p-2 text-left">Estado</th>
-                <th className="p-2 text-left">QR</th>
-                <th className="p-2 text-left">Acciones</th>
+                <th className="p-1.5 text-left">Cliente</th>
+                <th className="p-1.5 text-left">DNI</th>
+                <th className="p-1.5 text-left">Fecha Registro</th>
+                <th className="p-1.5 text-left">Plan Actual</th>
+                <th className="p-1.5 text-left">Estado</th>
+                <th className="p-1.5 text-left">Última Asistencia</th>
+                <th className="p-1.5 text-left">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {clientesFiltrados.map((c) => (
-                <motion.tr
-                  key={c.id}
-                  className="border-b border-slate-700 hover:bg-white/5 transition-colors"
-                  whileHover={{ scale: 1.005 }}
-                >
-                  <td className="p-2">{c.nombreCompleto}</td>
-                  <td className="p-2">{c.telefono}</td>
-                  <td className="p-2">
-                    <EstadoBadge estado={c.estado} />
-                  </td>
-                  <td className="p-2">
-                    {c.qrAcceso ? (
-                      <div
-                        onClick={() => setQrVisible(c.qrAcceso!)}
-                        className="cursor-pointer hover:scale-110 transition-transform"
-                      >
-                        <QRCode value={c.qrAcceso} size={40} bgColor="transparent" fgColor="#22c55e" />
+              {clientesFiltrados.map((c) => {
+                const fechaFormateada = c.ultimaAsistencia
+                  ? formatearFechaAsistencia(c.ultimaAsistencia)
+                  : "Sin registro";
+
+                return (
+                  <motion.tr
+                    key={c.id}
+                    className="border-b border-slate-700 hover:bg-white/5 transition-colors"
+                    whileHover={{ scale: 1.005 }}
+                  >
+                    <td className="p-1.5">{c.nombreCompleto}</td>
+                    <td className="p-1.5 text-slate-400">{c.dni || "—"}</td>
+                    <td className="p-1.5 text-slate-400">
+                      {c.fechaRegistro
+                        ? new Date(c.fechaRegistro).toLocaleDateString("es-PE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
+                        : "—"}
+                    </td>
+                    <td className="p-1.5">
+                      {c.membresiaActual ? (
+                        <span
+                          className="inline-block px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: c.membresiaActual.color
+                              ? `${c.membresiaActual.color}20`
+                              : "#38bdf820",
+                            color: c.membresiaActual.color || "#38bdf8",
+                            border: `1px solid ${c.membresiaActual.color || "#38bdf8"}40`,
+                          }}
+                        >
+                          {c.membresiaActual.nombre}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-xs italic">Sin plan</span>
+                      )}
+                    </td>
+                    <td className="p-1.5">
+                      <EstadoBadge estado={c.estado} />
+                    </td>
+                    <td className="p-1.5 text-slate-400">{fechaFormateada}</td>
+                    <td className="p-1.5">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setFichaCliente(c)}
+                          className="text-sky-400 hover:text-sky-300 text-xs flex items-center gap-1"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Ver Ficha
+                        </button>
+                        {c.estado === "activo" && c.qrAcceso && (
+                          <button
+                            onClick={() => setQrVisible(c.qrAcceso!)}
+                            className="text-emerald-400 hover:text-emerald-300 text-xs flex items-center gap-1"
+                          >
+                            <QrCode className="h-3.5 w-3.5" /> Ver QR
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleRegenerarQr(c.id)}
+                          className="text-amber-400 hover:text-amber-300 text-xs flex items-center gap-1"
+                        >
+                          <RefreshCcw className="h-3.5 w-3.5" /> Regenerar QR
+                        </button>
                       </div>
-                    ) : (
-                      <span className="text-slate-500 text-xs italic">Sin QR</span>
-                    )}
-                  </td>
-                  <td className="p-2">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setFichaCliente(c)}
-                        className="text-sky-400 hover:text-sky-300 text-xs flex items-center gap-1"
-                      >
-                        <Eye className="h-3.5 w-3.5" /> Ver Ficha
-                      </button>
-                      <button
-                        onClick={() => handleRegenerarQr(c.id)}
-                        className="text-emerald-400 hover:text-emerald-300 text-xs flex items-center gap-1"
-                      >
-                        <RefreshCcw className="h-3.5 w-3.5" /> Regenerar QR
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                  </motion.tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -289,10 +404,9 @@ export default function Clientes() {
           onClick={() => setQrVisible(null)}
           className="fixed inset-0 z-50 bg-black/70 grid place-items-center cursor-pointer"
         >
-          <div className="bg-[#0F1318] p-6 rounded-xl border border-white/10 text-center">
+          <div className="bg-[#0F1318] p-5 rounded-xl border border-white/10 text-center">
             <h3 className="text-lg mb-3 text-slate-300">Código QR generado</h3>
             <QRCode value={qrVisible} size={200} bgColor="transparent" fgColor="#22c55e" />
-            <p className="text-xs mt-2 text-slate-500 break-all">{qrVisible}</p>
             <p className="mt-3 text-sm text-slate-400">Haz clic fuera para cerrar</p>
           </div>
         </div>
@@ -326,8 +440,8 @@ export default function Clientes() {
       )}
 
       {/* 📈 Gráficos */}
-      <div className="grid grid-cols-2 gap-6 mt-6">
-        <div className="bg-[#1A1F25] border border-white/10 rounded-xl p-4">
+      <div className="grid grid-cols-2 gap-4 mt-6">
+        <div className="bg-[#1A1F25] border border-white/10 rounded-xl p-3">
           <h2 className="text-slate-300 text-sm font-semibold mb-4">
             Evolución mensual de clientes
           </h2>
@@ -357,7 +471,7 @@ export default function Clientes() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-[#1A1F25] border border-white/10 rounded-xl p-4">
+        <div className="bg-[#1A1F25] border border-white/10 rounded-xl p-3">
           <h2 className="text-slate-300 text-sm font-semibold mb-4">
             Distribución por estado
           </h2>
