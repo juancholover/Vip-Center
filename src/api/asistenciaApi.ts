@@ -5,7 +5,7 @@ const BASE_URL = `${API_BASE}/asistencia`;
 
 export interface Asistencia {
   id: number;
-  fechaHora: string; // ISO format
+  fechaHora: string;
   tipoRegistro: "QR_AUTO" | "MANUAL_STAFF" | "MOLINETE";
   dispositivo?: string;
   ipAddress?: string;
@@ -13,7 +13,7 @@ export interface Asistencia {
   longitud?: number;
   notas?: string;
   horaFormateada?: string; // Ej: "08:30 AM" (generado en frontend)
-  
+
   // Cliente (objeto anidado que viene del backend)
   cliente: {
     id: number;
@@ -65,20 +65,20 @@ export const AsistenciaApi = {
   // 🔹 Registrar asistencia mediante token QR
   async registrarPorToken(token: string): Promise<RegistrarAsistenciaResponse> {
     console.log("🔍 Intentando registrar asistencia con token:", token);
-    
+
     try {
       const url = `${BASE_URL}/registrar?token=${encodeURIComponent(token)}`;
       console.log("📡 URL de registro:", url);
-      
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
       });
-      
+
       console.log("📥 Respuesta del servidor:", res.status, res.statusText);
-      
+
       if (!res.ok) {
         // Intentar leer JSON del backend para extraer mensaje
         let status = res.status;
@@ -100,7 +100,7 @@ export const AsistenciaApi = {
         err.status = status;
         throw err;
       }
-      
+
       const data = await res.json();
       console.log("✅ Asistencia registrada:", data);
       return data;
@@ -133,7 +133,7 @@ export const AsistenciaApi = {
   // 🔹 Obtener asistencias de hoy
   async obtenerAsistenciasHoy(): Promise<Asistencia[]> {
     const token = useAuthStore.getState().accessToken;
-    
+
     try {
       const res = await fetch(`${BASE_URL}/hoy`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -145,10 +145,10 @@ export const AsistenciaApi = {
       }
 
       const data = await res.json();
-      
+
       // El backend puede devolver un array directo o un objeto con { asistencias: [] }
       let asistencias: any[] = [];
-      
+
       if (Array.isArray(data)) {
         asistencias = data;
       } else if (data && Array.isArray(data.asistencias)) {
@@ -158,7 +158,7 @@ export const AsistenciaApi = {
         console.warn("⚠️ Formato de respuesta no reconocido:", data);
         return [];
       }
-      
+
       // Formatear hora para display
       return asistencias.map((a: any) => ({
         ...a,
@@ -177,7 +177,7 @@ export const AsistenciaApi = {
   // 🔹 Obtener asistencias por rango de fechas
   async obtenerAsistenciasPorRango(fechaInicio: string, fechaFin: string): Promise<Asistencia[]> {
     const token = useAuthStore.getState().accessToken;
-    
+
     try {
       const res = await fetch(
         `${BASE_URL}/rango?inicio=${fechaInicio}&fin=${fechaFin}`,
@@ -192,10 +192,10 @@ export const AsistenciaApi = {
       }
 
       const data = await res.json();
-      
+
       // El backend puede devolver un array directo o un objeto con { asistencias: [] }
       let asistencias: any[] = [];
-      
+
       if (Array.isArray(data)) {
         asistencias = data;
       } else if (data && Array.isArray(data.asistencias)) {
@@ -205,7 +205,7 @@ export const AsistenciaApi = {
         console.warn("⚠️ Formato de respuesta no reconocido (rango):", data);
         return [];
       }
-      
+
       return asistencias.map((a: Asistencia) => ({
         ...a,
         horaFormateada: new Date(a.fechaHora).toLocaleTimeString('es-PE', {
@@ -223,7 +223,7 @@ export const AsistenciaApi = {
   // 🔹 Obtener historial de asistencias de un cliente
   async obtenerHistorialCliente(clienteId: number, limite = 30): Promise<Asistencia[]> {
     const token = useAuthStore.getState().accessToken;
-    
+
     try {
       const res = await fetch(`${BASE_URL}/cliente/${clienteId}?limite=${limite}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -235,10 +235,10 @@ export const AsistenciaApi = {
       }
 
       const data = await res.json();
-      
+
       // El backend puede devolver un array directo o un objeto con { asistencias: [] }
       let asistencias: any[] = [];
-      
+
       if (Array.isArray(data)) {
         asistencias = data;
       } else if (data && Array.isArray(data.asistencias)) {
@@ -248,7 +248,7 @@ export const AsistenciaApi = {
         console.warn("⚠️ Formato de respuesta no reconocido (historial):", data);
         return [];
       }
-      
+
       return asistencias.map((a: Asistencia) => ({
         ...a,
         horaFormateada: new Date(a.fechaHora).toLocaleString('es-PE', {
