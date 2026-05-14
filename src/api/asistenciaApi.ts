@@ -1,6 +1,7 @@
 import { useAuthStore } from "../store/useAuthStore";
 
-const BASE_URL = "http://localhost:8080/api/asistencia";
+const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+const BASE_URL = `${API_BASE}/asistencia`;
 
 export interface Asistencia {
   id: number;

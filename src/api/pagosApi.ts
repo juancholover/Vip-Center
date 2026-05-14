@@ -1,6 +1,7 @@
 import { useAuthStore } from "../store/useAuthStore";
 
-const BASE = "http://localhost:8080/api/pagos";
+const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+const BASE = `${API_BASE}/pagos`;
 
 export interface CrearPreferenciaPayload {
   clienteId: number;

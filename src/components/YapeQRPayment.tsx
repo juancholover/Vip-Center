@@ -53,7 +53,8 @@ export default function YapeQRPayment({
     try {
       // Generar preferencia de pago que incluye QR
       const token = useAuthStore.getState().accessToken;
-      const response = await fetch('http://localhost:8080/api/pagos/crear', {
+      const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+      const response = await fetch(`${API_BASE}/pagos/crear`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +118,8 @@ export default function YapeQRPayment({
       const token = useAuthStore.getState().accessToken;
       
       // Llamar al backend para verificar el pago manualmente
-      const response = await fetch(`http://localhost:8080/api/pagos/${clienteId}/verificar-pago-manual`, {
+      const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+      const response = await fetch(`${API_BASE}/pagos/${clienteId}/verificar-pago-manual`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
