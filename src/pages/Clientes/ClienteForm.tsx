@@ -14,6 +14,7 @@ export default function ClienteForm({ cliente, onClose, onSuccess }: Props) {
     nombre: "",
     apellido: "",
     telefono: "",
+    dni: "",
     email: "",
   });
 
@@ -26,6 +27,7 @@ export default function ClienteForm({ cliente, onClose, onSuccess }: Props) {
         nombre: cliente.nombre,
         apellido: cliente.apellido,
         telefono: cliente.telefono,
+        dni: cliente.dni ?? "",
         email: cliente.email ?? "",
       });
     } else {
@@ -33,6 +35,7 @@ export default function ClienteForm({ cliente, onClose, onSuccess }: Props) {
         nombre: "",
         apellido: "",
         telefono: "",
+        dni: "",
         email: "",
       });
     }
@@ -118,6 +121,17 @@ export default function ClienteForm({ cliente, onClose, onSuccess }: Props) {
               value={form.telefono}
               onChange={handleChange}
               required
+              className="w-full mt-1 bg-[#0F1318] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          {/* DNI */}
+          <div>
+            <label className="text-xs text-slate-400">DNI (Opcional)</label>
+            <input
+              name="dni"
+              value={form.dni}
+              onChange={handleChange}
               className="w-full mt-1 bg-[#0F1318] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500"
             />
           </div>

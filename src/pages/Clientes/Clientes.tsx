@@ -424,6 +424,7 @@ export default function Clientes() {
               <tr>
                 <th className="p-1.5 text-left">Cliente</th>
                 <th className="p-1.5 text-left">Teléfono</th>
+                <th className="p-1.5 text-left">DNI</th>
                 <th className="p-1.5 text-left">Fecha Registro</th>
                 <th className="p-1.5 text-left">Membresía Actual</th>
                 <th className="p-1.5 text-left">Estado</th>
@@ -445,6 +446,7 @@ export default function Clientes() {
                   >
                     <td className="p-1.5">{c.nombreCompleto}</td>
                     <td className="p-1.5 text-slate-400">{c.telefono || "—"}</td>
+                    <td className="p-1.5 text-slate-400">{c.dni || "—"}</td>
                     <td className="p-1.5 text-slate-400">
                       {c.fechaRegistro
                         ? new Date(c.fechaRegistro).toLocaleDateString("es-PE", {
