@@ -250,7 +250,7 @@ export default function ReportesCompleto() {
         setTendenciaIngresos(tendencia);
         setDistribucionIngresosPlan(distPlan);
         setHistorialPagos(historial);
-        setMetricasIngresos(metricas.filter(m => m.categoria === "ingreso"));
+        setMetricasIngresos(metricas.filter((m: MetricaComparativaDTO) => m.categoria === "ingreso"));
         setIngresosPorMetodo(porMetodo);
         setRetencionMensual(retencion);
       }
