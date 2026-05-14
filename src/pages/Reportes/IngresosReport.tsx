@@ -11,9 +11,6 @@ import {
   Legend,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import {
   DollarSign,
@@ -22,9 +19,8 @@ import {
   CheckCircle,
   Download,
   Calendar,
-  Filter,
 } from "lucide-react";
-import { ReportesApi, ReporteMetodoPagoDTO, ReporteIngresosPorPlanDTO } from "../../api/reportesApi";
+import { ReportesApi } from "../../api/reportesApi";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
@@ -48,20 +44,11 @@ interface ReporteIngresosAdaptado {
   ingresosRechazados: number;
 }
 
-const COLORS = ["#00C49F", "#FFBB28", "#FF8042", "#0088FE", "#A28DFF"];
-
 export default function IngresosReport() {
   const [loading, setLoading] = useState(false);
   const [reportesAnuales, setReportesAnuales] = useState<ReporteIngresosAdaptado[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [chartData, setChartData] = useState<ChartData[]>([]);
-
-  // States para Método de Pago y Plan
-  const [fechaInicio, setFechaInicio] = useState("");
-  const [fechaFin, setFechaFin] = useState("");
-  const [metodosPago, setMetodosPago] = useState<ReporteMetodoPagoDTO[]>([]);
-  const [ingresosPlan, setIngresosPlan] = useState<ReporteIngresosPorPlanDTO[]>([]);
-  const [exporting, setExporting] = useState(false);
 
   // Totales calculados con validación
   const totales = reportesAnuales.reduce(
@@ -145,57 +132,7 @@ export default function IngresosReport() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
-  const cargarFiltrosExtras = async () => {
-    try {
-      const [metodos, planes] = await Promise.all([
-        ReportesApi.obtenerIngresosPorMetodo(fechaInicio || undefined, fechaFin || undefined).catch(() => [
-          { metodo: "Yape/Plin", total: 15400, cantidad: 120, porcentaje: 45 },
-          { metodo: "Tarjeta", total: 12000, cantidad: 80, porcentaje: 35 },
-          { metodo: "Efectivo", total: 6845, cantidad: 150, porcentaje: 20 },
-        ]),
-        ReportesApi.obtenerIngresosPorPlan(fechaInicio || undefined, fechaFin || undefined).catch(() => [
-          { plan: "Plan Anual", total: 20000, cantidad: 40, porcentaje: 60 },
-          { plan: "Plan Mensual", total: 10000, cantidad: 100, porcentaje: 30 },
-          { plan: "Semanal", total: 4245, cantidad: 60, porcentaje: 10 },
-        ])
-      ]);
-      setMetodosPago(metodos);
-      setIngresosPlan(planes);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    cargarFiltrosExtras();
-  }, [fechaInicio, fechaFin]);
-
-  const handleExportNuevo = async () => {
-    setExporting(true);
-    try {
-      const blob = await ReportesApi.exportarIngresos(
-        selectedYear,
-        fechaInicio || undefined,
-        fechaFin || undefined
-      );
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `Reporte_Ingresos_${new Date().getTime()}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      toast.success("Reporte exportado exitosamente por el backend");
-    } catch (error) {
-      console.error(error);
-      toast.error("Error al exportar. Generando backup local...");
-      handleExportAnterior();
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleExportAnterior = () => {
+  const handleExport = () => {
     try {
       if (reportesAnuales.length === 0) {
         toast.error("No hay datos para exportar");
@@ -293,46 +230,13 @@ export default function IngresosReport() {
             })}
           </select>
           <button
-            onClick={handleExportNuevo}
-            disabled={exporting}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+            onClick={handleExport}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
           >
-            {exporting ? (
-              <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+            <Download className="w-4 h-4" />
             Exportar
           </button>
         </div>
-      </div>
-
-      {/* Formulario de Filtros de Fechas */}
-      <div className="bg-[#1A1F25] p-5 rounded-xl border border-white/10 flex flex-col md:flex-row gap-4 items-end">
-        <div className="flex-1 w-full">
-          <label className="block text-xs font-medium text-slate-400 mb-1">Fecha Inicio</label>
-          <input
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-            className="w-full bg-[#0F1318] text-white px-4 py-2 rounded-lg border border-white/10 focus:border-emerald-500 focus:outline-none"
-          />
-        </div>
-        <div className="flex-1 w-full">
-          <label className="block text-xs font-medium text-slate-400 mb-1">Fecha Fin</label>
-          <input
-            type="date"
-            value={fechaFin}
-            onChange={(e) => setFechaFin(e.target.value)}
-            className="w-full bg-[#0F1318] text-white px-4 py-2 rounded-lg border border-white/10 focus:border-emerald-500 focus:outline-none"
-          />
-        </div>
-        <button
-          onClick={cargarFiltrosExtras}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors w-full md:w-auto h-[42px] flex flex-row items-center justify-center gap-2"
-        >
-          <Filter className="w-4 h-4" /> Filtrar Distribución
-        </button>
       </div>
 
       {loading ? (
@@ -508,82 +412,6 @@ export default function IngresosReport() {
               </AreaChart>
             </ResponsiveContainer>
           </motion.div>
-
-          {/* Pie Charts para Método y Plan */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Por Método de Pago */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 }}
-              className="bg-[#1A1F25] p-6 rounded-xl shadow-xl border border-white/10 flex flex-col items-center"
-            >
-              <h3 className="text-lg font-bold text-white mb-4 self-start">Ingresos por Método de Pago</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={metodosPago as unknown as Array<Record<string, string | number>>}
-                    dataKey="total"
-                    nameKey="metodo"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={(entry) => {
-                      const e = entry as unknown as { name: string; percent: number };
-                      return `${e.name} ${(e.percent * 100).toFixed(0)}%`;
-                    }}
-                    labelLine={false}
-                  >
-                    {metodosPago.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#1A1F25", borderColor: "#334155" }}
-                    formatter={(value: number) => `S/ ${value.toFixed(2)}`}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </motion.div>
-
-            {/* Por Plan */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-[#1A1F25] p-6 rounded-xl shadow-xl border border-white/10 flex flex-col items-center"
-            >
-              <h3 className="text-lg font-bold text-white mb-4 self-start">Ingresos por Plan</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={ingresosPlan as unknown as Array<Record<string, string | number>>}
-                    dataKey="total"
-                    nameKey="plan"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    label={(entry) => {
-                      const e = entry as unknown as { name: string; percent: number };
-                      return `${e.name} ${(e.percent * 100).toFixed(0)}%`;
-                    }}
-                    labelLine={false}
-                  >
-                    {ingresosPlan.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#1A1F25", borderColor: "#334155" }}
-                    formatter={(value: number) => `S/ ${value.toFixed(2)}`}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </motion.div>
-          </div>
 
           {/* Tabla de datos mensuales */}
           <motion.div

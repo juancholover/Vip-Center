@@ -1,8 +1,9 @@
+/// <reference types="vite/client" />
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
 
 export const axiosClient = axios.create({
   baseURL: API_BASE,
@@ -28,11 +29,6 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config;
     const { refreshToken, refreshSession, logout } = useAuthStore.getState();
     const notify = useNotificationStore.getState().show;
-
-    // Evita reintentos si estamos en una ruta de auth (/login, /refresh, /logout)
-    if (originalRequest.url?.includes('/auth/')) {
-      return Promise.reject(error);
-    }
 
     // Si no hay refresh token o no fue 401 → devolver error normal
     if (error.response?.status !== 401 || !refreshToken) {

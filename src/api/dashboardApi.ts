@@ -18,17 +18,6 @@ export interface AsistenciasPorHora {
   cantidad: number;
 }
 
-export interface AsistenciaTendencia {
-  fecha: string;
-  cantidad: number;
-}
-
-export interface TopCliente {
-  id: number;
-  nombre: string;
-  asistencias: number;
-}
-
 export interface ActividadReciente {
   id: number;
   tipo: "pago" | "registro" | "asistencia";
@@ -62,28 +51,6 @@ export const DashboardApi = {
    */
   obtenerAsistenciasPorHora: async (): Promise<AsistenciasPorHora[]> => {
     const { data } = await axiosClient.get("/dashboard/asistencias-por-hora");
-    return data;
-  },
-
-  /**
-   * GET /dashboard/asistencias-tendencia
-   * Obtiene la tendencia de asistencias de los últimos días
-   */
-  obtenerAsistenciasTendencia: async (dias: number = 7): Promise<AsistenciaTendencia[]> => {
-    const { data } = await axiosClient.get("/dashboard/asistencias-tendencia", {
-      params: { dias },
-    });
-    return data;
-  },
-
-  /**
-   * GET /dashboard/top-clientes
-   * Obtiene los clientes con mayor cantidad de asistencias
-   */
-  obtenerTopClientes: async (limite: number = 10): Promise<TopCliente[]> => {
-    const { data } = await axiosClient.get("/dashboard/top-clientes", {
-      params: { limite },
-    });
     return data;
   },
 

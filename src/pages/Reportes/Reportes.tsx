@@ -14,13 +14,12 @@ import {
 import { ReportesApi, ReporteComparativoDTO } from "../../api/reportesApi";
 import toast from "react-hot-toast";
 import IngresosReport from "./IngresosReport";
-import SuscripcionesReport from "../Suscripcion/SuscripcionesReport";
-import HistorialPagosReport from "./HistorialPagosReport";
 import * as XLSX from "xlsx";
 // ❌ Imports temporalmente deshabilitados (tienen datos falsos):
+// import SuscripcionesReport from "../Suscripcion/SuscripcionesReport";
 // import AsistenciaReport from "../Asistencia/AsistenciaReport";
 
-type TabType = "overview" | "ingresos" | "suscripciones" | "historial" | "asistencia";
+type TabType = "overview" | "ingresos" | "suscripciones" | "asistencia";
 
 // ✅ Interfaz para datos adaptados (mismo formato que el backend devuelve después de la transformación)
 interface ReporteOverviewAdaptado {
@@ -154,9 +153,8 @@ export default function Reportes() {
   const tabs = [
     { id: "overview", label: "Resumen", icon: BarChart3 },
     { id: "ingresos", label: "Ingresos Detallados", icon: DollarSign },
-    { id: "suscripciones", label: "Membresías", icon: CreditCard },
-    { id: "historial", label: "Pagos y Renovaciones", icon: CreditCard },
     // ❌ Ocultados temporalmente (tienen datos falsos):
+    // { id: "suscripciones", label: "Membresías", icon: CreditCard },
     // { id: "asistencia", label: "Asistencias", icon: Users },
   ];
 
@@ -346,9 +344,8 @@ export default function Reportes() {
         )}
 
         {tab === "ingresos" && <IngresosReport />}
-        {tab === "suscripciones" && <SuscripcionesReport />}
-        {tab === "historial" && <HistorialPagosReport />}
         {/* ❌ Tabs con datos falsos - Ocultados temporalmente:
+        {tab === "suscripciones" && <SuscripcionesReport />}
         {tab === "asistencia" && <AsistenciaReport />}
         */}
       </motion.div>

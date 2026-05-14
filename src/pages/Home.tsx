@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Activity,
   BarChart3,
+  LineChart as LineChartIcon,
   CreditCard,
   CheckCircle,
   PartyPopper,
@@ -106,11 +107,41 @@ export default function Home() {
           { hora: "20:00", cantidad: 22 },
         ]),
         DashboardApi.obtenerActividadReciente().catch(() => [
-          { id: 1, tipo: "pago" as const, mensaje: "Juan Pérez realizó un pago de S/ 150.00", tiempo: "Hace 5 minutos", icono: "credit-card" },
-          { id: 2, tipo: "asistencia" as const, mensaje: "María García registró su asistencia", tiempo: "Hace 12 minutos", icono: "check-circle" },
-          { id: 3, tipo: "registro" as const, mensaje: "Nuevo cliente: Carlos López", tiempo: "Hace 1 hora", icono: "party-popper" },
-          { id: 4, tipo: "pago" as const, mensaje: "Ana Torres renovó su membresía Premium", tiempo: "Hace 2 horas", icono: "gem" },
-          { id: 5, tipo: "asistencia" as const, mensaje: "Luis Martínez completó su rutina", tiempo: "Hace 3 horas", icono: "dumbbell" },
+          {
+            id: 1,
+            tipo: "pago" as const,
+            mensaje: "Juan Pérez realizó un pago de S/ 150.00",
+            tiempo: "Hace 5 minutos",
+            icono: "credit-card",
+          },
+          {
+            id: 2,
+            tipo: "asistencia" as const,
+            mensaje: "María García registró su asistencia",
+            tiempo: "Hace 12 minutos",
+            icono: "check-circle",
+          },
+          {
+            id: 3,
+            tipo: "registro" as const,
+            mensaje: "Nuevo cliente: Carlos López",
+            tiempo: "Hace 1 hora",
+            icono: "party-popper",
+          },
+          {
+            id: 4,
+            tipo: "pago" as const,
+            mensaje: "Ana Torres renovó su membresía Premium",
+            tiempo: "Hace 2 horas",
+            icono: "gem",
+          },
+          {
+            id: 5,
+            tipo: "asistencia" as const,
+            mensaje: "Luis Martínez completó su rutina",
+            tiempo: "Hace 3 horas",
+            icono: "dumbbell",
+          },
         ]),
       ]);
 
@@ -150,7 +181,7 @@ export default function Home() {
 
   const kpiCards = [
     {
-      title: "Clientes Matriculados",
+      title: "Clientes Activos",
       value: clientesAnimado,
       icon: Users,
       color: "from-emerald-500 to-emerald-600",
@@ -291,7 +322,7 @@ export default function Home() {
       </div>
 
       {/* Gráficos de Análisis - Compactos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Gráfico de Ingresos */}
         <motion.div
           className="bg-[#1A1F25] rounded-lg border border-white/10 p-3"
@@ -300,7 +331,7 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-1.5">
-            <DollarSign className="w-4 h-4 text-blue-400" />
+            <LineChartIcon className="w-4 h-4 text-blue-400" />
             Ingresos Últimos 7 Días
           </h2>
           <ResponsiveContainer width="100%" height={180}>
@@ -348,7 +379,7 @@ export default function Home() {
         >
           <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-1.5">
             <BarChart3 className="w-4 h-4 text-purple-400" />
-            Horas Pico (Hoy)
+            Asistencias por Hora (Hoy)
           </h2>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={asistenciasPorHora}>
@@ -379,7 +410,7 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Quick Actions & Activity Feed */}
+      {/* Quick Actions & Activity Feed - Compactos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Quick Actions */}
         <motion.div
