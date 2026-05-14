@@ -16,11 +16,6 @@ export default function EstadoBadge({ estado }: { estado: EstadoCliente }) {
       label: "Vencido",
       animate: "animate-pulse-red",
     },
-    sin_membresia: {
-      bg: "bg-slate-500/15 border-slate-400/30",
-      text: "text-slate-300",
-      label: "Sin membresía",
-    },
     qr_deshabilitado: {
       bg: "bg-yellow-500/15 border-yellow-400/30",
       text: "text-yellow-300",
@@ -29,7 +24,7 @@ export default function EstadoBadge({ estado }: { estado: EstadoCliente }) {
     },
   };
 
-  const style = map[estado] ?? map.sin_membresia;
+  const style = map[estado] ?? map.vencido;
 
   return (
     <span

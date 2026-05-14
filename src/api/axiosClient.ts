@@ -29,6 +29,11 @@ axiosClient.interceptors.response.use(
     const { refreshToken, refreshSession, logout } = useAuthStore.getState();
     const notify = useNotificationStore.getState().show;
 
+    // Evita reintentos si estamos en una ruta de auth (/login, /refresh, /logout)
+    if (originalRequest.url?.includes('/auth/')) {
+      return Promise.reject(error);
+    }
+
     // Si no hay refresh token o no fue 401 → devolver error normal
     if (error.response?.status !== 401 || !refreshToken) {
       return Promise.reject(error);

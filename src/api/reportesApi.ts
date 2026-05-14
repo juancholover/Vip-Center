@@ -132,12 +132,46 @@ export interface ReporteMetodoPagoDTO {
   porcentaje: number;
 }
 
+export interface ReporteIngresosPorPlanDTO {
+  plan: string;
+  total: number;
+  cantidad: number;
+  porcentaje: number;
+}
+
+export interface ReporteSuscripcionDTO {
+  id: number;
+  cliente: string;
+  plan: string;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: string;
+}
+
 export interface ReporteRenovacionCancelacionDTO {
   mes: string;
   renovaciones: number;
   cancelaciones: number;
   anio: number;
   mesNumero: number;
+}
+
+export interface ReporteRetencionMensualDTO {
+  anio: number;
+  mesNumero: number;
+  mes: string;
+  renovaciones: number;
+  cancelaciones: number;
+}
+
+export interface SuscripcionPaginadaDTO {
+  clienteId: number;
+  nombreCompleto: string;
+  email: string;
+  telefono: string;
+  plan: string;
+  fechaVencimiento: string;
+  estado: string;
 }
 
 // ========== API ==========
@@ -161,6 +195,70 @@ export const ReportesApi = {
   obtenerIngresosAnual: async (anio: number): Promise<ReporteIngresosDTO[]> => {
     const { data } = await axiosClient.get(`/reportes/ingresos/anual`, {
       params: { anio },
+    });
+    return data;
+  },
+
+  /**
+   * GET /reportes/ingresos/por-metodo
+   * Obtiene ingresos agrupados por método de pago
+   */
+  obtenerIngresosPorMetodo: async (fechaInicio?: string, fechaFin?: string): Promise<ReporteMetodoPagoDTO[]> => {
+    const { data } = await axiosClient.get(`/reportes/ingresos/por-metodo`, {
+      params: { fechaInicio, fechaFin },
+    });
+    return data;
+  },
+
+  /**
+   * GET /reportes/ingresos/por-plan
+   * Obtiene ingresos agrupados por plan de membresía
+   */
+  obtenerIngresosPorPlan: async (fechaInicio?: string, fechaFin?: string): Promise<ReporteIngresosPorPlanDTO[]> => {
+    const { data } = await axiosClient.get(`/reportes/ingresos/por-plan`, {
+      params: { fechaInicio, fechaFin },
+    });
+    return data;
+  },
+
+  /**
+   * GET /reportes/ingresos/exportar
+   * Exporta reporte de ingresos según filtros
+   */
+  exportarIngresos: async (anio?: number, inicio?: string, fin?: string): Promise<Blob> => {
+    const { data } = await axiosClient.get("/reportes/ingresos/exportar", {
+      params: { anio, inicio, fin },
+      responseType: "blob",
+    });
+    return data;
+  },
+
+  /**
+   * GET /reportes/suscripciones
+   * Obtiene el listado de suscripciones con filtros
+   */
+  obtenerSuscripcionesPaginadas: async (
+    page: number = 0,
+    size: number = 10,
+    estado?: string,
+    fechaInicio?: string,
+    fechaFin?: string,
+    diasAnticipacion?: number
+  ): Promise<{ content: SuscripcionPaginadaDTO[]; totalPages: number; totalElements: number; first: boolean; last: boolean; numberOfElements: number; empty: boolean }> => {
+    const { data } = await axiosClient.get("/reportes/suscripciones", {
+      params: { page, size, estado, fechaInicio, fechaFin, diasAnticipacion },
+    });
+    return data;
+  },
+
+  /**
+   * GET /reportes/suscripciones/exportar
+   * Exporta el listado de suscripciones según filtros
+   */
+  exportarSuscripciones: async (estado?: string, fechaInicio?: string, fechaFin?: string, diasAnticipacion?: number): Promise<Blob> => {
+    const { data } = await axiosClient.get("/reportes/suscripciones/exportar", {
+      params: { estado, fechaInicio, fechaFin, diasAnticipacion },
+      responseType: "blob",
     });
     return data;
   },
@@ -350,6 +448,38 @@ export const ReportesApi = {
   obtenerRenovacionesCancelaciones: async (inicio?: string, fin?: string): Promise<ReporteRenovacionCancelacionDTO[]> => {
     const params = inicio && fin ? { inicio, fin } : {};
     const { data } = await axiosClient.get(`/reportes/suscripciones/renovaciones-cancelaciones`, { params });
+    return data;
+  },
+
+  /**
+   * GET /reportes/pagos/historial
+   * Historial de pagos con buscador (HU-30)
+   */
+  obtenerHistorialPagosConBusqueda: async (busqueda: string = ""): Promise<ReportePagoHistorialDTO[]> => {
+    const { data } = await axiosClient.get(`/reportes/pagos/historial`, {
+      params: { busqueda },
+    });
+    return data;
+  },
+
+  /**
+   * GET /reportes/retencion
+   * Retención mensual - últimos 12 meses (HU-30)
+   */
+  obtenerRetencionMensual: async (): Promise<ReporteRetencionMensualDTO[]> => {
+    const { data } = await axiosClient.get(`/reportes/retencion`);
+    return data;
+  },
+
+  /**
+   * GET /reportes/pagos/historial/exportar
+   * Exportar historial de pagos a Excel (HU-30)
+   */
+  exportarHistorialPagos: async (busqueda: string = ""): Promise<Blob> => {
+    const { data } = await axiosClient.get(`/reportes/pagos/historial/exportar`, {
+      params: { busqueda },
+      responseType: "blob",
+    });
     return data;
   },
 };

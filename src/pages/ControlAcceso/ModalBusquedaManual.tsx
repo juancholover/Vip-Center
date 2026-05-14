@@ -129,7 +129,7 @@ export default function ModalBusquedaManual({
                         </div>
                       ) : (
                         <p className="text-sm text-red-300 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" /> Sin membresía activa
+                          <AlertTriangle className="w-3 h-3" /> Membresía vencida
                         </p>
                       )}
                     </div>

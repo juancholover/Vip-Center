@@ -279,7 +279,7 @@ export default function AsistenciaModule() {
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-red-400 font-medium">❌ Sin membresía</span>
+                        <span className="text-sm text-red-400 font-medium">❌ Vencido</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

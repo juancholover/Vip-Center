@@ -25,7 +25,10 @@ import {
   UserX,
   Award,
   RefreshCw,
-  FileText
+  FileText,
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -58,7 +61,10 @@ import type {
   ReporteClienteProximoVencerDTO,
   ReportePagoHistorialDTO,
   ReporteRenovacionCancelacionDTO,
-  MetricaComparativaDTO
+  MetricaComparativaDTO,
+  ReporteRetencionMensualDTO,
+  SuscripcionPaginadaDTO,
+  ReporteMetodoPagoDTO
 } from "../../api/reportesApi";
 
 // ==================== TIPOS ====================
@@ -176,14 +182,23 @@ export default function ReportesCompleto() {
   const [proximosVencer, setProximosVencer] = useState<ReporteClienteProximoVencerDTO[]>([]);
   const [renovacionesCancelaciones, setRenovacionesCancelaciones] = useState<ReporteRenovacionCancelacionDTO[]>([]);
   const [metricasSuscripciones, setMetricasSuscripciones] = useState<MetricaComparativaDTO[]>([]);
-  // const [membresiasMasVendidas, setMembresiasMasVendidas] = useState<ReporteMembresiaDTO[]>([]);
+  // HU-28: Tabla paginada de suscripciones
+  const [suscripcionesPaginadas, setSuscripcionesPaginadas] = useState<SuscripcionPaginadaDTO[]>([]);
+  const [suscripcionesPage, setSuscripcionesPage] = useState(0);
+  const [suscripcionesTotalPages, setSuscripcionesTotalPages] = useState(0);
+  const [suscripcionesTotalElements, setSuscripcionesTotalElements] = useState(0);
+  const [suscripcionesEstadoFiltro, setSuscripcionesEstadoFiltro] = useState<string>("");
 
   // Estados para Reportes de Ingresos
   const [tendenciaIngresos, setTendenciaIngresos] = useState<ReporteTendenciaDTO[]>([]);
   const [distribucionIngresosPlan, setDistribucionIngresosPlan] = useState<ReporteDistribucionDTO[]>([]);
   const [historialPagos, setHistorialPagos] = useState<ReportePagoHistorialDTO[]>([]);
   const [metricasIngresos, setMetricasIngresos] = useState<MetricaComparativaDTO[]>([]);
-  // const [ingresosResumen, setIngresosResumen] = useState<ReporteIngresosDTO | null>(null);
+  // HU-29: Ingresos por método de pago
+  const [ingresosPorMetodo, setIngresosPorMetodo] = useState<ReporteMetodoPagoDTO[]>([]);
+  // HU-30: Historial con buscador + Retención
+  const [busquedaPagos, setBusquedaPagos] = useState("");
+  const [retencionMensual, setRetencionMensual] = useState<ReporteRetencionMensualDTO[]>([]);
 
   // Cargar datos según la vista activa y rango temporal
   const cargarDatos = async () => {
@@ -207,36 +222,37 @@ export default function ReportesCompleto() {
         setAsistenciasRecientes(recientes);
         setMetricasAsistencia(metricas.filter(m => m.categoria === "asistencia"));
       } else if (vistaActiva === "suscripciones") {
-        const [distEstado, distMembresia, proximos, renovaciones, metricas] = await Promise.all([
+        const [distEstado, distMembresia, proximos, renovaciones, metricas, suscPaginadas] = await Promise.all([
           ReportesApi.obtenerDistribucionPorEstado(),
           ReportesApi.obtenerDistribucionPorMembresia(),
-          ReportesApi.obtenerClientesProximosVencer(7), // 🔥 Cambiado de 15 a 7 días
-          ReportesApi.obtenerRenovacionesCancelaciones(inicio, fin), // 🔥 Ahora con filtro de fechas
-          ReportesApi.obtenerMetricasComparativas(inicio, fin), // Pasamos el rango de fechas
-          // ReportesApi.obtenerMembresiasMasVendidas(inicio, fin),
+          ReportesApi.obtenerClientesProximosVencer(7),
+          ReportesApi.obtenerRenovacionesCancelaciones(inicio, fin),
+          ReportesApi.obtenerMetricasComparativas(inicio, fin),
+          ReportesApi.obtenerSuscripcionesPaginadas(suscripcionesPage, 10, suscripcionesEstadoFiltro || undefined),
         ]);
         setDistribucionEstado(distEstado);
         setDistribucionMembresia(distMembresia);
         setProximosVencer(proximos);
         setRenovacionesCancelaciones(renovaciones);
         setMetricasSuscripciones(metricas);
-        // setMembresiasMasVendidas(masVendidas);
+        setSuscripcionesPaginadas(suscPaginadas.content);
+        setSuscripcionesTotalPages(suscPaginadas.totalPages);
+        setSuscripcionesTotalElements(suscPaginadas.totalElements);
       } else if (vistaActiva === "ingresos") {
-        const [tendencia, distPlan, historial, metricas] = await Promise.all([
+        const [tendencia, distPlan, historial, metricas, porMetodo, retencion] = await Promise.all([
           ReportesApi.obtenerTendenciaIngresos(inicio, fin),
           ReportesApi.obtenerDistribucionIngresosPorPlan(inicio, fin),
-          ReportesApi.obtenerHistorialPagos(10),
+          ReportesApi.obtenerHistorialPagosConBusqueda(busquedaPagos),
           ReportesApi.obtenerMetricasComparativas(inicio, fin),
+          ReportesApi.obtenerIngresosPorMetodo(inicio, fin),
+          ReportesApi.obtenerRetencionMensual(),
         ]);
         setTendenciaIngresos(tendencia);
         setDistribucionIngresosPlan(distPlan);
         setHistorialPagos(historial);
         setMetricasIngresos(metricas.filter(m => m.categoria === "ingreso"));
-
-        // Obtener resumen de ingresos del mes actual
-        // const hoy = new Date();
-        // const resumen = await ReportesApi.obtenerIngresosMensual(hoy.getFullYear(), hoy.getMonth() + 1);
-        // setIngresosResumen(resumen);
+        setIngresosPorMetodo(porMetodo);
+        setRetencionMensual(retencion);
       }
     } catch (error) {
       console.error("Error al cargar reportes:", error);
@@ -361,6 +377,13 @@ export default function ReportesCompleto() {
             proximosVencer={proximosVencer}
             renovacionesCancelaciones={renovacionesCancelaciones}
             metricas={metricasSuscripciones}
+            suscripcionesPaginadas={suscripcionesPaginadas}
+            suscripcionesPage={suscripcionesPage}
+            suscripcionesTotalPages={suscripcionesTotalPages}
+            suscripcionesTotalElements={suscripcionesTotalElements}
+            suscripcionesEstadoFiltro={suscripcionesEstadoFiltro}
+            onPageChange={(page: number) => { setSuscripcionesPage(page); cargarDatos(); }}
+            onEstadoFiltroChange={(estado: string) => { setSuscripcionesEstadoFiltro(estado); setSuscripcionesPage(0); cargarDatos(); }}
           />
         )}
         {vistaActiva === "ingresos" && (
@@ -370,6 +393,11 @@ export default function ReportesCompleto() {
             distribucionIngresosPlan={distribucionIngresosPlan}
             historialPagos={historialPagos}
             metricasIngresos={metricasIngresos}
+            ingresosPorMetodo={ingresosPorMetodo}
+            busquedaPagos={busquedaPagos}
+            onBusquedaChange={(val: string) => { setBusquedaPagos(val); }}
+            onBuscar={() => { cargarDatos(); }}
+            retencionMensual={retencionMensual}
           />
         )}
       </AnimatePresence>
@@ -674,6 +702,14 @@ interface VistaSuscripcionesProps {
   proximosVencer: ReporteClienteProximoVencerDTO[];
   renovacionesCancelaciones: ReporteRenovacionCancelacionDTO[];
   metricas: MetricaComparativaDTO[];
+  // HU-28
+  suscripcionesPaginadas: SuscripcionPaginadaDTO[];
+  suscripcionesPage: number;
+  suscripcionesTotalPages: number;
+  suscripcionesTotalElements: number;
+  suscripcionesEstadoFiltro: string;
+  onPageChange: (page: number) => void;
+  onEstadoFiltroChange: (estado: string) => void;
 }
 
 function VistaSuscripciones({
@@ -681,7 +717,14 @@ function VistaSuscripciones({
   distribucionMembresia,
   proximosVencer,
   renovacionesCancelaciones,
-  metricas
+  metricas,
+  suscripcionesPaginadas,
+  suscripcionesPage,
+  suscripcionesTotalPages,
+  suscripcionesTotalElements,
+  suscripcionesEstadoFiltro,
+  onPageChange,
+  onEstadoFiltroChange,
 }: VistaSuscripcionesProps) {
   
   // Helper para encontrar métrica por nombre
@@ -935,6 +978,128 @@ function VistaSuscripciones({
           </div>
         </div>
       </div>
+
+      {/* HU-28: Tabla Paginada de Suscripciones */}
+      <div className="bg-[#1A1F25] rounded-lg p-4 border border-white/10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+              Listado de Suscripciones
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">{suscripcionesTotalElements} registros encontrados</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Filtro por estado */}
+            <select
+              value={suscripcionesEstadoFiltro}
+              onChange={(e) => onEstadoFiltroChange(e.target.value)}
+              className="bg-[#0F1318] text-white text-xs border border-white/10 rounded-lg px-3 py-2 outline-none"
+              id="filtro-estado-suscripciones"
+            >
+              <option value="">Todos los estados</option>
+              <option value="activa">Activas</option>
+              <option value="vencida">Vencidas</option>
+              <option value="por_vencer">Por vencer</option>
+              <option value="sin_membresia">Vencido</option>
+            </select>
+            {/* Exportar */}
+            <button
+              onClick={async () => {
+                try {
+                  const blob = await ReportesApi.exportarSuscripciones(suscripcionesEstadoFiltro || undefined);
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `reporte_suscripciones_${new Date().toISOString().split("T")[0]}.xlsx`;
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  toast.success("Suscripciones exportadas correctamente");
+                } catch {
+                  toast.error("Error al exportar suscripciones");
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-lg shadow-emerald-500/30"
+              id="btn-exportar-suscripciones"
+            >
+              <Download className="w-4 h-4" />
+              Exportar Excel
+            </button>
+          </div>
+        </div>
+
+        {suscripcionesPaginadas.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-slate-400 text-sm">No hay suscripciones con los filtros seleccionados</p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#0f1318] border-b border-white/10">
+                    <th className="text-left text-xs font-semibold text-slate-300 uppercase tracking-wider px-4 py-3">Cliente</th>
+                    <th className="text-left text-xs font-semibold text-slate-300 uppercase tracking-wider px-4 py-3">Email</th>
+                    <th className="text-left text-xs font-semibold text-slate-300 uppercase tracking-wider px-4 py-3">Plan</th>
+                    <th className="text-center text-xs font-semibold text-slate-300 uppercase tracking-wider px-4 py-3">Vencimiento</th>
+                    <th className="text-center text-xs font-semibold text-slate-300 uppercase tracking-wider px-4 py-3">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suscripcionesPaginadas.map((susc, index) => (
+                    <tr
+                      key={susc.clienteId}
+                      className={`border-b border-white/5 hover:bg-[#1e293b] transition-colors ${index % 2 === 0 ? "bg-[#141b24]" : ""}`}
+                    >
+                      <td className="px-4 py-3">
+                        <p className="text-white font-medium text-sm">{susc.nombreCompleto}</p>
+                        <p className="text-slate-500 text-xs">{susc.telefono}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-300">{susc.email}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${getBadgeMembresia(susc.plan)}`}>{susc.plan}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-slate-300">{susc.fechaVencimiento}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                          susc.estado === "ACTIVA" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
+                          susc.estado === "POR_VENCER" ? "bg-orange-500/20 text-orange-400 border border-orange-500/30" :
+                          susc.estado === "VENCIDA" ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+                          "bg-slate-500/20 text-slate-400 border border-slate-500/30"
+                        }`}>
+                          {susc.estado.replace("_", " ")}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <div className="flex items-center justify-between mt-4 px-2">
+              <p className="text-xs text-slate-400">
+                Página {suscripcionesPage + 1} de {suscripcionesTotalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onPageChange(suscripcionesPage - 1)}
+                  disabled={suscripcionesPage === 0}
+                  className="p-2 rounded-lg bg-[#0F1318] border border-white/10 text-slate-400 hover:text-white disabled:opacity-30 transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onPageChange(suscripcionesPage + 1)}
+                  disabled={suscripcionesPage >= suscripcionesTotalPages - 1}
+                  className="p-2 rounded-lg bg-[#0F1318] border border-white/10 text-slate-400 hover:text-white disabled:opacity-30 transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -946,13 +1111,25 @@ interface VistaIngresosProps {
   distribucionIngresosPlan: ReporteDistribucionDTO[];
   historialPagos: ReportePagoHistorialDTO[];
   metricasIngresos: MetricaComparativaDTO[];
+  // HU-29
+  ingresosPorMetodo: ReporteMetodoPagoDTO[];
+  // HU-30
+  busquedaPagos: string;
+  onBusquedaChange: (val: string) => void;
+  onBuscar: () => void;
+  retencionMensual: ReporteRetencionMensualDTO[];
 }
 
 function VistaIngresos({
   tendenciaIngresos,
   distribucionIngresosPlan,
   historialPagos,
-  metricasIngresos
+  metricasIngresos,
+  ingresosPorMetodo,
+  busquedaPagos,
+  onBusquedaChange,
+  onBuscar,
+  retencionMensual,
 }: VistaIngresosProps) {
   // Buscar métricas específicas
   const metricaIngresosTotales = metricasIngresos.find(m => m.nombre === "Ingresos Totales");
@@ -1267,29 +1444,120 @@ function VistaIngresos({
         </div>
       </div>
 
-      {/* Tabla de Historial de Pagos */}
+      {/* HU-29: Ingresos por Método + HU-30: Retención */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Pie Chart - Métodos de Pago */}
+        <div className="bg-[#1A1F25] rounded-lg p-4 border border-white/10">
+          <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">
+            Distribución por Método de Pago
+          </h3>
+          {ingresosPorMetodo.length === 0 ? (
+            <div className="flex items-center justify-center h-[260px]">
+              <p className="text-slate-400 text-sm">No hay datos de métodos de pago</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={ingresosPorMetodo.map((m, i) => ({ name: m.metodo, value: m.total, color: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][i % 5] }))}
+                    cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value"
+                    label={(e) => `${(e as unknown as {name:string}).name} ${((e as unknown as {percent:number}).percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {ingresosPorMetodo.map((_, i) => (
+                      <Cell key={i} fill={["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][i % 5]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-3 mt-2">
+                {ingresosPorMetodo.map((m, i) => (
+                  <div key={m.metodo} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][i % 5] }} />
+                    <span className="text-xs text-slate-300">{m.metodo} (S/ {m.total.toLocaleString()})</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Retención Mensual */}
+        <div className="bg-[#1A1F25] rounded-lg p-4 border border-white/10">
+          <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">
+            Retención Mensual (12 meses)
+          </h3>
+          {retencionMensual.length === 0 ? (
+            <div className="flex items-center justify-center h-[260px]">
+              <p className="text-slate-400 text-sm">No hay datos de retención</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={retencionMensual.map(r => ({
+                mes: r.mes.slice(0, 3),
+                renovaciones: r.renovaciones,
+                cancelaciones: r.cancelaciones,
+                tasa: r.renovaciones + r.cancelaciones > 0 ? Math.round((r.renovaciones / (r.renovaciones + r.cancelaciones)) * 100) : 0,
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <XAxis dataKey="mes" stroke="#94a3b8" style={{ fontSize: "11px" }} />
+                <YAxis stroke="#94a3b8" style={{ fontSize: "11px" }} />
+                <Tooltip contentStyle={{ backgroundColor: "#0F1318", border: "1px solid #ffffff20", borderRadius: "8px", color: "#fff", fontSize: "12px" }} />
+                <Legend />
+                <Line type="monotone" dataKey="renovaciones" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} name="Renovaciones" />
+                <Line type="monotone" dataKey="cancelaciones" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} name="Cancelaciones" />
+                <Line type="monotone" dataKey="tasa" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} name="Tasa Retención %" />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Tabla de Historial de Pagos con Buscador (HU-30) */}
       <div className="bg-[#1A1F25] rounded-lg p-4 border border-white/10">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-bold text-white uppercase tracking-wide">
-              Historial de Pagos Recientes
+              Historial de Pagos
             </h3>
-            <p className="text-xs text-slate-400 mt-1">Últimos 10 pagos registrados</p>
+            <p className="text-xs text-slate-400 mt-1">{historialPagos.length} pagos encontrados</p>
           </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={exportarExcel}
-              className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-emerald-500/30"
+          <div className="flex gap-2 items-center">
+            {/* Buscador HU-30 */}
+            <div className="flex items-center gap-2 bg-[#0F1318] border border-white/10 rounded-lg px-3 py-1.5">
+              <Search className="w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={busquedaPagos}
+                onChange={(e) => onBusquedaChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && onBuscar()}
+                placeholder="Buscar por nombre o teléfono..."
+                className="bg-transparent text-white text-xs outline-none w-48"
+                id="input-busqueda-pagos"
+              />
+              <button onClick={onBuscar} className="text-emerald-400 hover:text-emerald-300 text-xs font-medium">Buscar</button>
+            </div>
+            {/* Exportar desde backend */}
+            <button
+              onClick={async () => {
+                try {
+                  const blob = await ReportesApi.exportarHistorialPagos(busquedaPagos);
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `historial_pagos_${new Date().toISOString().split("T")[0]}.xlsx`;
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  toast.success("Historial exportado correctamente");
+                } catch { toast.error("Error al exportar historial"); }
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-lg shadow-emerald-500/30"
+              id="btn-exportar-historial"
             >
               <Download className="w-4 h-4" />
               Excel
-            </button>
-            <button 
-              onClick={exportarPDF}
-              className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-red-500/30"
-            >
-              <FileText className="w-4 h-4" />
-              PDF
             </button>
           </div>
         </div>

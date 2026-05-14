@@ -18,8 +18,8 @@ const MENSAJES_MOTIVO: Record<string, { titulo: string; descripcion: string }> =
     descripcion: 'El código QR está deshabilitado. Contacta recepción.'
   },
   SIN_MEMBRESIA: {
-    titulo: 'Sin Membresía Activa',
-    descripcion: 'No tienes una membresía activa. Adquiere una para acceder.'
+    titulo: 'Membresía Vencida',
+    descripcion: 'No tienes una membresía vigente. Renueva para acceder.'
   },
   CLIENTE_NO_ENCONTRADO: {
     titulo: 'Cliente No Encontrado',

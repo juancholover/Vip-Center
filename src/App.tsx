@@ -13,6 +13,8 @@ import ReportesCompleto from "./pages/Reportes/ReportesCompleto";
 import MembresiasMain from "./pages/Membresias/MembresiasMain";
 import NotificacionesConfig from "./pages/Configuracion/NotificacionesConfig";
 import ControlAcceso from "./pages/ControlAcceso";
+import Recepcion from "./pages/Recepcion/Recepcion";
+import ClientesInactivos from "./pages/Clientes/ClientesInactivos";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Notification } from "./components/Notification";
 
@@ -70,6 +72,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
                 <ReportesCompleto />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="recepcion"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
+                <Recepcion />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="clientes-inactivos"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <ClientesInactivos />
               </ProtectedRoute>
             }
           />

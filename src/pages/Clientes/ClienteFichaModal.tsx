@@ -162,7 +162,7 @@ export default function ClienteFichaModal({ cliente, onClose, onEdit }: ClienteF
           </div>
         ) : (
           <div className="mb-4 p-4 rounded-lg border border-red-700/50 bg-red-900/20">
-            <p className="text-red-400 text-sm font-medium">⚠️ Sin membresía activa</p>
+            <p className="text-red-400 text-sm font-medium">⚠️ Membresía vencida</p>
             <p className="text-red-300/70 text-xs mt-1">
               Este cliente no tiene una membresía asignada. El acceso está deshabilitado.
             </p>

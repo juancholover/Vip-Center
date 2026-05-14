@@ -36,7 +36,7 @@ export default function Clientes() {
   const [formOpen, setFormOpen] = useState(false);
   const [clienteEditando, setClienteEditando] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "todos" | "activos" | "vencidos" | "sin-membresia"
+    "todos" | "activos" | "vencidos"
   >("todos");
   const [search, setSearch] = useState("");
   const [fichaCliente, setFichaCliente] = useState<Cliente | null>(null);
@@ -45,8 +45,7 @@ export default function Clientes() {
     total: 0,
     nuevos: 0,
     activos: 0,
-    inactivos: 0,
-    vencidas: 0,
+    vencidos: 0,
     retencion: 94,
   });
 
@@ -73,7 +72,6 @@ export default function Clientes() {
 
       // Calcular estadísticas
       const activos = data.filter((c) => c.estado === "activo").length;
-      const sinMembresia = data.filter((c) => c.estado === "sin_membresia").length;
       const vencidos = data.filter((c) => c.estado === "vencido").length;
       
       // Calcular tasa de retención: (Activos / (Activos + Vencidos)) * 100
@@ -86,8 +84,7 @@ export default function Clientes() {
         total: data.length,
         nuevos: clientesNuevos,
         activos: activos,
-        inactivos: sinMembresia,
-        vencidas: vencidos,
+        vencidos: vencidos,
         retencion: tasaRetencion,
       });
 
@@ -120,15 +117,13 @@ export default function Clientes() {
 
   // 🧭 Filtro por tabs (declarar antes del useEffect que lo usa)
   const filtrarClientes = useCallback((tab: string) => {
-    setActiveTab(tab as "todos" | "activos" | "vencidos" | "sin-membresia");
+    setActiveTab(tab as "todos" | "activos" | "vencidos");
     if (tab === "todos") {
       setClientesFiltrados(clientes);
     } else if (tab === "activos") {
       setClientesFiltrados(clientes.filter((c) => c.estado === "activo"));
     } else if (tab === "vencidos") {
       setClientesFiltrados(clientes.filter((c) => c.estado === "vencido"));
-    } else if (tab === "sin-membresia") {
-      setClientesFiltrados(clientes.filter((c) => c.estado === "sin_membresia"));
     }
   }, [clientes]);
 
@@ -291,8 +286,7 @@ export default function Clientes() {
           { title: "Total", value: metricas.total, color: "emerald", icon: Users },
           { title: "Nuevos", value: metricas.nuevos, color: "blue", icon: UserPlus },
           { title: "Activos", value: metricas.activos, color: "green", icon: Activity },
-          { title: "Sin Membresía", value: metricas.inactivos, color: "yellow", icon: Clock },
-          { title: "Vencidos", value: metricas.vencidas, color: "red", icon: AlertTriangle },
+          { title: "Vencidos", value: metricas.vencidos, color: "red", icon: AlertTriangle },
           { title: "Retención", value: `${metricas.retencion}%`, color: "teal", icon: TrendingUp },
         ].map(({ title, value, color, icon: Icon }) => (
           <motion.div
@@ -360,8 +354,7 @@ export default function Clientes() {
               <Pie
                 data={[
                   { name: "Activos", value: metricas.activos },
-                  { name: "Vencidos", value: metricas.vencidas },
-                  { name: "Sin membresía", value: metricas.inactivos },
+                  { name: "Vencidos", value: metricas.vencidos },
                 ]}
                 cx="50%"
                 cy="50%"
@@ -401,7 +394,6 @@ export default function Clientes() {
           { id: "todos", label: "Todos" },
           { id: "activos", label: "Activos" },
           { id: "vencidos", label: "Vencidos" },
-          { id: "sin-membresia", label: "Sin Membresía" },
         ].map((tab) => (
           <motion.button
             key={tab.id}

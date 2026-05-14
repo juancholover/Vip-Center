@@ -5,7 +5,6 @@ const BASE_URL = "http://localhost:8080/api/clientes"; // Full URL (no usa axios
 export type EstadoCliente =
   | "activo"
   | "vencido"
-  | "sin_membresia"
   | "qr_deshabilitado";
 
 export interface Cliente {
@@ -57,7 +56,7 @@ export const ClientesApi = {
     // ✅ Aseguramos que el tipo `estado` sea siempre válido
     return (data as unknown[]).map((c) => ({
       ...(c as Record<string, unknown>),
-      estado: ((c as Record<string, unknown>).estado ?? "sin_membresia") as EstadoCliente,
+      estado: ((c as Record<string, unknown>).estado ?? "vencido") as EstadoCliente,
     })) as unknown as Cliente[];
   },
 
@@ -86,7 +85,7 @@ export const ClientesApi = {
     const data = await res.json();
     return {
       ...data,
-      estado: (data.estado ?? "sin_membresia") as EstadoCliente,
+      estado: (data.estado ?? "vencido") as EstadoCliente,
     };
   },
 
@@ -142,7 +141,7 @@ export const ClientesApi = {
       const data = await res.json();
       return (data as unknown[]).map((c) => ({ 
         ...(c as Record<string, unknown>), 
-        estado: ((c as Record<string, unknown>).estado ?? "sin_membresia") as EstadoCliente 
+        estado: ((c as Record<string, unknown>).estado ?? "vencido") as EstadoCliente 
       })) as unknown as Cliente[];
     } catch (err) {
       console.error('Error en ClientesApi.buscar', err);

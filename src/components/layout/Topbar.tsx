@@ -116,6 +116,16 @@ export default function Topbar() {
               Reportes
             </NavLink>
             <NavLink
+              to="/clientes-inactivos"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-red-400"
+                  : "text-slate-300 hover:text-red-300 transition-colors"
+              }
+            >
+              Inactivos
+            </NavLink>
+            <NavLink
               to="/configuracion/notificaciones"
               className={({ isActive }) =>
                 isActive
@@ -126,6 +136,20 @@ export default function Topbar() {
               Configuración
             </NavLink>
           </>
+        )}
+
+        {/* Recepción — visible para admin y secretaria */}
+        {(isAdmin || isSecretaria) && (
+          <NavLink
+            to="/recepcion"
+            className={({ isActive }) =>
+              isActive
+                ? "text-teal-400"
+                : "text-slate-300 hover:text-teal-300 transition-colors"
+            }
+          >
+            Recepción
+          </NavLink>
         )}
 
         {/* Perfil disponible para todos */}
