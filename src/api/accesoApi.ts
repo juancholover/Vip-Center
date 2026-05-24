@@ -32,7 +32,7 @@ export interface RegistrarAsistenciaRequest {
 
 export interface RegistrarAsistenciaConQRRequest {
   qrToken: string;
-  tipoRegistro: "QR_AUTO" | "MANUAL_STAFF";
+  tipoRegistro: "INGRESO" | "QR_AUTO" | "MANUAL_STAFF";
   empleadoId?: number;
 }
 

@@ -9,7 +9,6 @@ interface PaymentLinksProps {
   monto: number;
   planNombre: string;
   onClose: () => void;
-  metodoPago?: 'yape' | 'tarjeta' | 'todos';
 }
 
 export default function PaymentLinks({
@@ -20,7 +19,6 @@ export default function PaymentLinks({
   monto,
   planNombre,
   onClose,
-  metodoPago = 'yape',
 }: PaymentLinksProps) {
   const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false);
   const [enviandoEmail, setEnviandoEmail] = useState(false);
@@ -33,15 +31,10 @@ Te enviamos el enlace de pago para tu membresía en VIP CENTER FIT:
 📋 Plan: ${planNombre}
 💰 Monto: S/ ${monto.toFixed(2)}
 
-🔗 Enlace de pago seguro:
+🔗 Enlace de pago seguro (tarjeta — Mercado Pago):
 ${paymentUrl}
 
-${metodoPago === 'yape' ? `📱 Para pagar con YAPE:
-1. Abre el enlace en tu celular
-2. Busca la opción "Yape" en los métodos de pago
-3. Completa el pago desde tu app Yape
-
-` : ''}✅ Este enlace es válido por 24 horas
+✅ Este enlace es válido por 24 horas
 ⏰ Una vez realizado el pago, recibirás tu confirmación inmediatamente
 
 ¡Gracias por confiar en nosotros! 💪
@@ -62,9 +55,8 @@ ${paymentUrl}
 
 INSTRUCCIONES:
 1. Haz clic en el enlace de pago
-2. Selecciona tu método de pago preferido
-3. Completa la transacción de forma segura
-4. Recibirás tu confirmación automáticamente
+2. Completa la transacción con tarjeta de forma segura
+3. Recibirás tu confirmación automáticamente
 
 IMPORTANTE:
 - Este enlace es válido por 24 horas
@@ -148,8 +140,8 @@ Equipo VIP CENTER FIT
               🔗
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Enlace de Pago Generado</h2>
-              <p className="text-sm text-slate-400">Comparte el enlace con el cliente</p>
+              <h2 className="text-xl font-bold text-white">Enlace de Pago — Tarjeta</h2>
+              <p className="text-sm text-slate-400">Comparte el enlace de Mercado Pago con el cliente</p>
             </div>
           </div>
           <button
@@ -283,28 +275,6 @@ Equipo VIP CENTER FIT
           </div>
         </div>
 
-        {/* Yape Instructions */}
-        {metodoPago === 'yape' && (
-          <div className="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <div className="text-emerald-500 text-lg">📱</div>
-              <div className="text-sm">
-                <div className="font-semibold text-emerald-500 mb-2">¿Cómo pagar con Yape?</div>
-                <ol className="text-slate-300 space-y-1 text-xs list-decimal list-inside">
-                  <li>Abre el enlace de pago en tu celular</li>
-                  <li>En la pantalla de MercadoPago, busca la opción <strong>"Yape"</strong></li>
-                  <li>Haz clic en el logo de Yape (ícono morado)</li>
-                  <li>Se abrirá automáticamente tu app Yape</li>
-                  <li>Confirma el pago en tu app Yape</li>
-                </ol>
-                <div className="mt-2 text-emerald-400 font-medium text-xs">
-                  💡 Si no ves Yape, asegúrate de tener la app instalada y actualizada
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Important Notice */}
         <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <div className="flex items-start gap-2">
@@ -314,10 +284,8 @@ Equipo VIP CENTER FIT
               <ul className="text-slate-300 space-y-1 text-xs">
                 <li>• El enlace de pago es válido por 24 horas</li>
                 <li>• Una vez realizado el pago, el cliente recibirá confirmación automática</li>
-                <li>• Asegúrate de que el cliente tenga los datos correctos</li>
-                {metodoPago === 'yape' && (
-                  <li>• Si no aparece Yape, el cliente debe tener la app instalada</li>
-                )}
+                <li>• Solo acepta pago con tarjeta vía Mercado Pago</li>
+                <li>• Para Yape/Plin/Efectivo use &quot;Registrar pago manual&quot; en recepción</li>
               </ul>
             </div>
           </div>

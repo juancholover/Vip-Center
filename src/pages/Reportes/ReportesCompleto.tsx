@@ -116,6 +116,37 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
 
 // ==================== COMPONENTE PRINCIPAL ====================
 
+// Helper: rellenar fechas faltantes con valor 0 entre inicio y fin
+const rellenarFechasFaltantes = (
+  datos: ReporteTendenciaDTO[],
+  inicio: string,
+  fin: string
+): ReporteTendenciaDTO[] => {
+  const map = new Map<string, ReporteTendenciaDTO>();
+  datos.forEach(d => map.set(d.fecha, d));
+
+  const resultado: ReporteTendenciaDTO[] = [];
+  const fechaInicio = new Date(inicio + 'T00:00:00');
+  // Usar la fecha actual como fin si el fin es futuro
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const fechaFinDate = new Date(fin + 'T00:00:00');
+  const fechaFin = fechaFinDate > hoy ? hoy : fechaFinDate;
+
+  const current = new Date(fechaInicio);
+  while (current <= fechaFin) {
+    const key = current.toISOString().slice(0, 10);
+    if (map.has(key)) {
+      resultado.push(map.get(key)!);
+    } else {
+      resultado.push({ fecha: key, valor: 0, monto: 0 });
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return resultado;
+};
+
 // Helper: calcular rango de fechas según el filtro temporal
 const calcularRangoFechas = (rango: RangoTemporal): { inicio: string; fin: string } => {
   const hoy = new Date();
@@ -215,7 +246,7 @@ export default function ReportesCompleto() {
           ReportesApi.obtenerAsistenciasRecientes(10),
           ReportesApi.obtenerMetricasComparativas(inicio, fin),
         ]);
-        setTendenciaAsistencias(tendencia);
+        setTendenciaAsistencias(rellenarFechasFaltantes(tendencia, inicio, fin));
         setHorasPico(horas);
         setTopClientes(top);
         setClientesAusentes(ausentes);
@@ -247,7 +278,7 @@ export default function ReportesCompleto() {
           ReportesApi.obtenerIngresosPorMetodo(inicio, fin),
           ReportesApi.obtenerRetencionMensual(),
         ]);
-        setTendenciaIngresos(tendencia);
+        setTendenciaIngresos(rellenarFechasFaltantes(tendencia, inicio, fin));
         setDistribucionIngresosPlan(distPlan);
         setHistorialPagos(historial);
         setMetricasIngresos(metricas.filter((m: MetricaComparativaDTO) => m.categoria === "ingreso"));
@@ -507,9 +538,16 @@ function VistaAsistencia({
                   dataKey="dia" 
                   stroke="#94a3b8" 
                   style={{ fontSize: "11px" }}
-                  angle={tendenciaAsistencias.length > 15 ? -45 : 0}
-                  textAnchor={tendenciaAsistencias.length > 15 ? "end" : "middle"}
-                  height={tendenciaAsistencias.length > 15 ? 60 : 30}
+                  angle={tendenciaAsistencias.length > 7 ? -45 : 0}
+                  textAnchor={tendenciaAsistencias.length > 7 ? "end" : "middle"}
+                  height={tendenciaAsistencias.length > 7 ? 60 : 30}
+                  tickFormatter={(val) => {
+                    if (!val) return "";
+                    // Si viene como YYYY-MM-DD
+                    const parts = val.split('-');
+                    if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+                    return val;
+                  }}
                 />
                 <YAxis stroke="#94a3b8" style={{ fontSize: "11px" }} />
                 <Tooltip content={<CustomTooltip />} />
@@ -590,7 +628,7 @@ function VistaAsistencia({
                 <XAxis dataKey="hora" stroke="#94a3b8" style={{ fontSize: "11px" }} />
                 <YAxis stroke="#94a3b8" style={{ fontSize: "11px" }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="intensidad" radius={[8, 8, 0, 0]}>
+                <Bar dataKey="intensidad" name="Asistencias" radius={[8, 8, 0, 0]}>
                   {horasPico.map((entry, index) => {
                     let color = "#374151"; // Bajo
                     if (entry.intensidad > 80) color = "#fb923c"; // Alto
@@ -817,9 +855,15 @@ function VistaSuscripciones({
                   dataKey="mes" 
                   stroke="#94a3b8" 
                   style={{ fontSize: "11px" }}
-                  angle={renovacionesCancelaciones.length > 15 ? -45 : 0}
-                  textAnchor={renovacionesCancelaciones.length > 15 ? "end" : "middle"}
-                  height={renovacionesCancelaciones.length > 15 ? 60 : 30}
+                  angle={renovacionesCancelaciones.length > 7 ? -45 : 0}
+                  textAnchor={renovacionesCancelaciones.length > 7 ? "end" : "middle"}
+                  height={renovacionesCancelaciones.length > 7 ? 60 : 30}
+                  tickFormatter={(val) => {
+                    if (!val) return "";
+                    const parts = val.split('-');
+                    if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+                    return val;
+                  }}
                 />
                 <YAxis 
                   stroke="#94a3b8" 
@@ -865,11 +909,6 @@ function VistaSuscripciones({
                 outerRadius={90}
                 paddingAngle={2}
                 dataKey="value"
-                label={(entry) => {
-                  // entry: PieLabelRenderProps
-                  const e = entry as { name: string; percent?: number };
-                  return `${e.name} ${e.percent !== undefined ? (e.percent * 100).toFixed(0) : "0"}%`;
-                }}
                 labelLine={false}
               >
                 {distribucionEstado.map((entry, index) => (
@@ -952,10 +991,6 @@ function VistaSuscripciones({
                 outerRadius={90}
                 paddingAngle={2}
                 dataKey="value"
-                label={(entry) => {
-                  const e = entry as { name: string; percent?: number };
-                  return `${e.name} ${e.percent !== undefined ? (e.percent * 100).toFixed(0) : "0"}%`;
-                }}
                 labelLine={false}
               >
                 {distribucionMembresia.map((entry, index) => (
@@ -1228,7 +1263,7 @@ function VistaIngresos({
           pago.cliente,
           pago.plan,
           pago.metodo,
-          `$${typeof pago.monto === 'number' ? pago.monto.toFixed(2) : pago.monto}`,
+          `S/. ${typeof pago.monto === 'number' ? pago.monto.toFixed(2) : pago.monto}`,
           pago.estado
         ]),
         headStyles: {
@@ -1308,7 +1343,7 @@ function VistaIngresos({
       {/* Métricas Clave */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
-          numero={metricaIngresosTotales?.valorActual || "$0"}
+          numero={metricaIngresosTotales?.valorActual || "S/. 0.00"}
           label="INGRESOS TOTALES"
           tendencia={metricaIngresosTotales?.tendencia === "up" ? "positiva" : metricaIngresosTotales?.tendencia === "down" ? "negativa" : undefined}
           indicador={metricaIngresosTotales?.porcentajeCambio ? `${metricaIngresosTotales.porcentajeCambio > 0 ? '+' : ''}${metricaIngresosTotales.porcentajeCambio.toFixed(1)}%` : undefined}
@@ -1318,7 +1353,7 @@ function VistaIngresos({
           colorTexto="text-emerald-400"
         />
         <MetricCard
-          numero={metricaIngresosSemana?.valorActual || "$0"}
+          numero={metricaIngresosSemana?.valorActual || "S/. 0.00"}
           label="INGRESOS ESTA SEMANA"
           tendencia={metricaIngresosSemana?.tendencia === "up" ? "positiva" : metricaIngresosSemana?.tendencia === "down" ? "negativa" : undefined}
           indicador={metricaIngresosSemana?.porcentajeCambio ? `${metricaIngresosSemana.porcentajeCambio > 0 ? '+' : ''}${metricaIngresosSemana.porcentajeCambio.toFixed(1)}%` : undefined}
@@ -1328,7 +1363,7 @@ function VistaIngresos({
           colorTexto="text-blue-400"
         />
         <MetricCard
-          numero={metricaIngresosHoy?.valorActual || "$0"}
+          numero={metricaIngresosHoy?.valorActual || "S/. 0.00"}
           label="INGRESOS HOY"
           tendencia={metricaIngresosHoy?.tendencia === "up" ? "positiva" : metricaIngresosHoy?.tendencia === "down" ? "negativa" : undefined}
           indicador={metricaIngresosHoy?.porcentajeCambio ? `${metricaIngresosHoy.porcentajeCambio > 0 ? '+' : ''}${metricaIngresosHoy.porcentajeCambio.toFixed(1)}%` : undefined}
@@ -1374,9 +1409,15 @@ function VistaIngresos({
                   dataKey="dia" 
                   stroke="#94a3b8" 
                   style={{ fontSize: "11px" }}
-                  angle={tendenciaIngresos.length > 15 ? -45 : 0}
-                  textAnchor={tendenciaIngresos.length > 15 ? "end" : "middle"}
-                  height={tendenciaIngresos.length > 15 ? 60 : 30}
+                  angle={tendenciaIngresos.length > 7 ? -45 : 0}
+                  textAnchor={tendenciaIngresos.length > 7 ? "end" : "middle"}
+                  height={tendenciaIngresos.length > 7 ? 60 : 30}
+                  tickFormatter={(val) => {
+                    if (!val) return "";
+                    const parts = val.split('-');
+                    if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+                    return val;
+                  }}
                 />
                 <YAxis stroke="#94a3b8" style={{ fontSize: "11px" }} />
                 <Tooltip content={<CustomTooltip />} />
@@ -1415,10 +1456,6 @@ function VistaIngresos({
                     outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
-                    label={(entry) => {
-                      const e = entry as { name: string; value?: number };
-                      return `$${e.value !== undefined ? e.value.toLocaleString() : "0"}`;
-                    }}
                     labelLine={false}
                   >
                     {distribucionIngresosPlan.map((entry, index) => (
@@ -1462,7 +1499,6 @@ function VistaIngresos({
                   <Pie
                     data={ingresosPorMetodo.map((m, i) => ({ name: m.metodo, value: m.total, color: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][i % 5] }))}
                     cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value"
-                    label={(e) => `${(e as unknown as {name:string}).name} ${((e as unknown as {percent:number}).percent * 100).toFixed(0)}%`}
                     labelLine={false}
                   >
                     {ingresosPorMetodo.map((_, i) => (
@@ -1615,7 +1651,7 @@ function VistaIngresos({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-right">
-                      <span className="text-emerald-400 font-bold">${typeof pago.monto === 'number' ? pago.monto.toFixed(2) : pago.monto}</span>
+                      <span className="text-emerald-400 font-bold">S/. {typeof pago.monto === 'number' ? pago.monto.toFixed(2) : pago.monto}</span>
                     </td>
                     <td className="px-4 py-3 text-sm text-center">
                       <span

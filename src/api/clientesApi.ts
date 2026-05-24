@@ -1,6 +1,7 @@
 import { useAuthStore } from "../store/useAuthStore";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:8080/api" : "https://vip-center-backend.onrender.com/api");
 const BASE_URL = `${API_BASE}/clientes`;
 
 export type EstadoCliente =
@@ -41,6 +42,28 @@ export interface CrearClienteRequest {
   dni?: string;
   email?: string;
   notas?: string;
+}
+
+export interface ClienteInactivoDTO {
+  clienteId: number;
+  nombreCompleto: string;
+  telefono: string;
+  email: string;
+  plan: string;
+  fechaVencimiento: string;
+  ultimaAsistencia: string;
+  diasInactivo: number;
+  nivelRiesgo: string;
+  colorBadge: string;
+}
+
+export interface InactividadResponse {
+  totalInactivos: number;
+  bajo: number;
+  medio: number;
+  alto: number;
+  critico: number;
+  clientes: ClienteInactivoDTO[];
 }
 
 export const ClientesApi = {
@@ -148,5 +171,35 @@ export const ClientesApi = {
       console.error('Error en ClientesApi.buscar', err);
       return [];
     }
+  },
+
+  // 🔹 HU-34: Panel de Alertas de Inactividad
+  async obtenerInactividad(diasMinimo: number = 0, nivelRiesgo?: string): Promise<InactividadResponse> {
+    const token = useAuthStore.getState().accessToken;
+    const url = new URL(`${BASE_URL}/inactividad`);
+    url.searchParams.append("diasMinimo", diasMinimo.toString());
+    if (nivelRiesgo) url.searchParams.append("nivelRiesgo", nivelRiesgo);
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Error al obtener reporte de inactividad");
+    return res.json();
+  },
+
+  // 🔹 HU-35: Exportar Base de Inactivos a Excel
+  async exportarInactivos(diasMinimo: number = 15): Promise<void> {
+    const token = useAuthStore.getState().accessToken;
+    const res = await fetch(`${BASE_URL}/exportar-inactivos?diasMinimo=${diasMinimo}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Error al exportar inactivos");
+    
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "clientes_inactivos.xlsx";
+    a.click();
   },
 };

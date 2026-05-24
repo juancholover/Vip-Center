@@ -1,6 +1,7 @@
 import { useAuthStore } from "../store/useAuthStore";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:8080/api" : "https://vip-center-backend.onrender.com/api");
 const BASE_URL = `${API_BASE}/membresias`;
 
 export interface Membresia {

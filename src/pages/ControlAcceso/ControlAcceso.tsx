@@ -27,7 +27,7 @@ export default function ControlAcceso() {
   
   // Estados de cámara
   const [camaraActiva, setCamaraActiva] = useState(false);
-  const [camaraFrontal] = useState(false);
+  const [camaraFrontal, setCamaraFrontal] = useState(false);
   const [escanerListo, setEscanerListo] = useState(false);
   
   const qrScannerRef = useRef<Html5Qrcode | null>(null);
@@ -68,7 +68,7 @@ export default function ControlAcceso() {
     
     if (modo === "ESCANEO" && !camaraActiva) {
       console.log("🚀 Iniciando cámara...");
-      iniciarCamara();
+      iniciarCamara(camaraFrontal);
     }
     
     return () => {
@@ -78,7 +78,7 @@ export default function ControlAcceso() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modo]);
 
-  const iniciarCamara = async () => {
+  const iniciarCamara = async (isFrontal = false) => {
     try {
       const html5QrCode = new Html5Qrcode("qr-reader");
       qrScannerRef.current = html5QrCode;
@@ -125,7 +125,7 @@ export default function ControlAcceso() {
       console.log("🎥 Solicitando permisos de cámara...");
       
       await html5QrCode.start(
-        { facingMode: camaraFrontal ? "user" : "environment" },
+        { facingMode: isFrontal ? "user" : "environment" },
         config,
         onScanSuccessCallback,
         onScanErrorCallback
@@ -169,15 +169,19 @@ export default function ControlAcceso() {
   };
 
   const detenerCamara = async () => {
-    if (qrScannerRef.current && camaraActiva) {
+    if (qrScannerRef.current) {
       try {
         await qrScannerRef.current.stop();
-        qrScannerRef.current.clear();
-        setCamaraActiva(false);
-        setEscanerListo(false);
       } catch (error) {
-        console.error("Error al detener cámara:", error);
+        console.log("Cámara ya estaba detenida o error al detener:", error);
       }
+      try {
+        qrScannerRef.current.clear();
+      } catch (error) {
+        console.log("Error al limpiar cámara:", error);
+      }
+      setCamaraActiva(false);
+      setEscanerListo(false);
     }
   };
 
@@ -212,7 +216,7 @@ export default function ControlAcceso() {
         // Registrar asistencia automáticamente
         await AccesoApi.registrarAsistenciaConQR({
           qrToken,
-          tipoRegistro: "QR_AUTO",
+          tipoRegistro: "INGRESO",
           empleadoId: 1, // Usuario del sistema
         });
 
@@ -267,6 +271,15 @@ export default function ControlAcceso() {
     } catch (error) {
       console.log("Error al reproducir sonido:", error);
     }
+  };
+
+  const alternarCamara = async () => {
+    const nuevaFrontal = !camaraFrontal;
+    setCamaraFrontal(nuevaFrontal);
+    await detenerCamara();
+    setTimeout(() => {
+      iniciarCamara(nuevaFrontal);
+    }, 300); // Pequeña pausa para asegurar que se detuvo bien
   };
 
   const abrirBusquedaManual = () => {
@@ -445,9 +458,26 @@ export default function ControlAcceso() {
                   </div>
                 )}
               </div>
-              <p className="text-center text-slate-400 text-xs mt-4">
+              <p className="text-center text-slate-400 text-xs mt-4 mb-3">
                 Coloca el código QR dentro del recuadro verde para escanear
               </p>
+              
+              {/* Botón para voltear cámara */}
+              <div className="flex justify-center mt-2">
+                <button
+                  type="button"
+                  onClick={alternarCamara}
+                  className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                  </svg>
+                  Cambiar a cámara {camaraFrontal ? "trasera" : "frontal"}
+                </button>
+              </div>
             </div>
 
             {/* Búsqueda Manual */}

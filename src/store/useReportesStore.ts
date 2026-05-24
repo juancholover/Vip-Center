@@ -24,7 +24,7 @@ export interface Asistencia {
 
 /** Utils */
 const fmt = (n: number) =>
-  n.toLocaleString("es-PE", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+  n.toLocaleString("es-PE", { style: "currency", currency: "PEN", maximumFractionDigits: 2 });
 
 const daysAgo = (d: number) => {
   const t = new Date();

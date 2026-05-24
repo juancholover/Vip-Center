@@ -14,6 +14,7 @@ import {
   Phone,
   Calendar,
   Activity,
+  ChevronDown
 } from "lucide-react";
 import { InactividadApi } from "../../api/inactividadApi";
 import type { ClienteInactivoDTO, InactividadResponse } from "../../api/inactividadApi";
@@ -126,12 +127,12 @@ export default function ClientesInactivos() {
 
         <div className="flex items-center gap-3 flex-wrap">
           {/* Filtro días mínimo */}
-          <div className="flex items-center gap-2 bg-[#1A1F25] rounded-lg border border-white/10 px-3 py-1.5">
+          <div className="relative flex items-center gap-2 bg-[#1A1F25] rounded-lg border border-white/10 px-3 py-1.5 focus-within:border-orange-500 transition-colors">
             <Filter className="w-4 h-4 text-slate-400" />
             <select
               value={diasMinimo}
               onChange={(e) => setDiasMinimo(Number(e.target.value))}
-              className="bg-transparent text-white text-sm outline-none cursor-pointer"
+              className="bg-transparent text-white text-sm outline-none cursor-pointer appearance-none pr-6"
               id="filtro-dias-inactivos"
             >
               <option value={0} className="bg-[#1A1F25]">Todos</option>
@@ -140,15 +141,16 @@ export default function ClientesInactivos() {
               <option value={30} className="bg-[#1A1F25]">+30 días</option>
               <option value={60} className="bg-[#1A1F25]">+60 días</option>
             </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none" />
           </div>
 
           {/* Filtro nivel riesgo */}
-          <div className="flex items-center gap-2 bg-[#1A1F25] rounded-lg border border-white/10 px-3 py-1.5">
+          <div className="relative flex items-center gap-2 bg-[#1A1F25] rounded-lg border border-white/10 px-3 py-1.5 focus-within:border-orange-500 transition-colors">
             <AlertTriangle className="w-4 h-4 text-slate-400" />
             <select
               value={nivelRiesgoFiltro}
               onChange={(e) => setNivelRiesgoFiltro(e.target.value)}
-              className="bg-transparent text-white text-sm outline-none cursor-pointer"
+              className="bg-transparent text-white text-sm outline-none cursor-pointer appearance-none pr-6"
               id="filtro-riesgo-inactivos"
             >
               <option value="" className="bg-[#1A1F25]">Todos los niveles</option>
@@ -157,6 +159,7 @@ export default function ClientesInactivos() {
               <option value="ALTO" className="bg-[#1A1F25]">Alto</option>
               <option value="CRITICO" className="bg-[#1A1F25]">Crítico</option>
             </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none" />
           </div>
 
           {/* Botón exportar (solo ADMIN) */}

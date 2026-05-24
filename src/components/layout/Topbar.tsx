@@ -25,11 +25,11 @@ export default function Topbar() {
       : "from-slate-400 via-slate-300 to-slate-500 shadow-[0_0_15px_#94a3b8]";
 
   return (
-    <header className="relative flex items-center justify-between px-8 py-4 border-b border-white/10 bg-[#171B22]/90 backdrop-blur-md shadow-lg">
+    <header className="relative flex flex-wrap md:flex-nowrap items-center justify-between px-4 md:px-8 py-2 md:py-3 border-b border-white/10 bg-[#171B22]/90 backdrop-blur-md shadow-lg gap-2 md:gap-4">
       {/* Logo */}
-      <div className="flex items-center gap-3">
-        <img src={logo} alt="logo" className="h-10 w-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" />
-        <h1 className="text-xl font-bold tracking-tight">
+      <div className="flex items-center gap-2 md:gap-3 shrink-0">
+        <img src={logo} alt="logo" className="h-7 w-7 md:h-9 md:w-9 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" />
+        <h1 className="text-lg md:text-xl font-bold tracking-tight">
           <span className="text-emerald-400">VIP</span>{" "}
           <span className="text-slate-200">Center</span>{" "}
           <span className="text-yellow-400">Fit</span>
@@ -37,7 +37,7 @@ export default function Topbar() {
       </div>
 
       {/* Navegación */}
-      <nav className="flex items-center gap-8 text-sm font-medium">
+      <nav className="flex items-center gap-3 md:gap-5 lg:gap-6 text-[11px] md:text-xs lg:text-sm font-medium overflow-x-auto scrollbar-hide whitespace-nowrap w-full md:w-auto order-last md:order-none pb-1 md:pb-0">
         <NavLink
           to="/"
           className={({ isActive }) =>
@@ -166,13 +166,13 @@ export default function Topbar() {
       </nav>
 
       {/* Usuario + Rol */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3 shrink-0 ml-auto md:ml-0">
         <div className="flex flex-col text-right">
-          <span className="text-sm text-slate-200 font-medium">
+          <span className="text-xs md:text-sm text-slate-200 font-medium">
             {user ? `${user.nombre} ${user.apellido}` : "Cargando..."}
           </span>
           <span
-            className={`text-[11px] mt-0.5 px-2 py-0.5 rounded-full border ${
+            className={`text-[10px] md:text-[11px] mt-0.5 px-2 py-0.5 rounded-full border inline-block w-fit ml-auto ${
               isAdmin
                 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                 : isSecretaria

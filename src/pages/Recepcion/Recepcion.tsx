@@ -13,6 +13,7 @@ import {
   Users,
   Filter,
   Shield,
+  ChevronDown,
 } from "lucide-react";
 import { RecepcionApi } from "../../api/recepcionApi";
 import type { ClientePorVencerDTO } from "../../api/recepcionApi";
@@ -110,18 +111,19 @@ export default function Recepcion() {
 
         <div className="flex items-center gap-3">
           {/* Filtro de días */}
-          <div className="flex items-center gap-2 bg-[#1A1F25] rounded-lg border border-white/10 px-3 py-1.5">
+          <div className="relative flex items-center gap-2 bg-[#1A1F25] rounded-lg border border-white/10 px-3 py-1.5 focus-within:border-emerald-500 transition-colors">
             <Filter className="w-4 h-4 text-slate-400" />
             <select
               value={diasFiltro}
               onChange={(e) => setDiasFiltro(Number(e.target.value))}
-              className="bg-transparent text-white text-sm outline-none cursor-pointer"
+              className="bg-transparent text-white text-sm outline-none cursor-pointer appearance-none pr-6"
               id="filtro-dias-recepcion"
             >
               <option value={7} className="bg-[#1A1F25]">Próximos 7 días</option>
               <option value={15} className="bg-[#1A1F25]">Próximos 15 días</option>
               <option value={30} className="bg-[#1A1F25]">Próximos 30 días</option>
             </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none" />
           </div>
 
           <button

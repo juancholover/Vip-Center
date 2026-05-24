@@ -3,7 +3,9 @@ import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+// Si estamos en desarrollo (npm run dev) usa localhost, en producción (Vercel) usa Render
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:8080/api" : "https://vip-center-backend.onrender.com/api");
 
 export const axiosClient = axios.create({
   baseURL: API_BASE,

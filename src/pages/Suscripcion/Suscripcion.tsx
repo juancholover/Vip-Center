@@ -5,9 +5,9 @@ import { ClientesApi, Cliente } from "../../api/clientesApi";
 import { MembresiasApi, Membresia } from "../../api/membresiasApi";
 import { DescuentosApi, Descuento } from "../../api/descuentosApi";
 import PaymentLinks from "../../components/PaymentLinks";
-import YapeQRPayment from "../../components/YapeQRPayment";
+import RegistrarPagoManualModal from "../../components/RegistrarPagoManualModal";
 import ModalQRSimple from "../../components/ModalQRSimple";
-import { Smartphone, CreditCard, Flame, Search } from "lucide-react";
+import { CreditCard, Banknote, Search, Smartphone } from "lucide-react";
 
 export default function Suscripcion() {
   const STORAGE_KEY = 'vip_center_form_suscripcion';
@@ -86,6 +86,7 @@ export default function Suscripcion() {
       apellido: "",
       email: "",
       telefono: "",
+      dni: "",
       clienteIdExistente: "",
     };
   };
@@ -124,6 +125,7 @@ export default function Suscripcion() {
       apellido: "",
       email: "",
       telefono: "",
+      dni: "",
       clienteIdExistente: "",
     };
     setForm(formVacio);
@@ -205,18 +207,11 @@ export default function Suscripcion() {
     clienteNombre: string;
     clienteTelefono: string;
     clienteEmail: string;
-    metodoPago: 'yape' | 'tarjeta' | 'todos';
   } | null>(null);
 
-  // Estados para el modal de QR Yape
-  const [showYapeQR, setShowYapeQR] = useState(false);
-  const [yapeQRData, setYapeQRData] = useState<{
+  const [showRegistrarManual, setShowRegistrarManual] = useState(false);
+  const [manualPagoData, setManualPagoData] = useState<{
     clienteId: number;
-    clienteEmail: string;
-    monto: number;
-    planNombre: string;
-    planDias: number;
-    membresiaId?: number;
   } | null>(null);
 
   // Estados para el modal de QR de acceso exitoso
@@ -269,15 +264,18 @@ export default function Suscripcion() {
     toast.success(`Cliente seleccionado: ${cliente.nombre} ${cliente.apellido}`);
   };
 
-  const handleGeneratePaymentLink = async (metodoPago: 'yape' | 'tarjeta' | 'todos' = 'yape') => {
-    try {
-      // 1) Si es nueva, crea el cliente (solo si no se ha creado antes)
-      let clienteId: number;
-      let clienteNombre = '';
-      let clienteTelefono = '';
-      let clienteEmail = '';
+  const resolverClienteParaPago = async (): Promise<{
+    clienteId: number;
+    clienteNombre: string;
+    clienteTelefono: string;
+    clienteEmail: string;
+  } | null> => {
+    let clienteId: number;
+    let clienteNombre = '';
+    let clienteTelefono = '';
+    let clienteEmail = '';
 
-      if (tipo === "nueva") {
+    if (tipo === "nueva") {
         // ✅ Si ya se creó un cliente en esta sesión, reutilizarlo
         if (clienteCreado) {
           clienteId = clienteCreado.id;
@@ -288,32 +286,27 @@ export default function Suscripcion() {
           // Validar campos obligatorios
           if (!form.nombre.trim() || !form.apellido.trim() || !form.telefono.trim()) {
             toast.error("Complete los campos obligatorios: Nombre, Apellido y Teléfono");
-            return;
+            return null;
           }
 
-          // Validar formato de teléfono
           const validacionTelefono = validarTelefono(form.telefono);
-
           if (!validacionTelefono.valido) {
             toast.error(validacionTelefono.mensaje);
-            return;
+            return null;
           }
 
-          // Extraer solo los 9 dígitos para guardar en BD
           const telefonoLimpio = extraerDigitosTelefono(form.telefono);
-
           const nuevo = await ClientesApi.crear({
             nombre: form.nombre.trim(),
             apellido: form.apellido.trim(),
-            telefono: telefonoLimpio, // Guardar solo 9XX XXX XXX sin +51
+            telefono: telefonoLimpio,
             email: form.email.trim(),
+            dni: form.dni?.trim(),
           });
           clienteId = nuevo.id;
           clienteNombre = `${form.nombre.trim()} ${form.apellido.trim()}`;
-          clienteTelefono = telefonoLimpio; // Usar el limpio para WhatsApp
+          clienteTelefono = telefonoLimpio;
           clienteEmail = form.email.trim();
-
-          // ✅ Guardar el cliente creado para reutilizarlo
           setClienteCreado({
             id: clienteId,
             nombre: clienteNombre,
@@ -321,121 +314,73 @@ export default function Suscripcion() {
             email: clienteEmail,
           });
         }
-      } else {
-        if (!form.clienteIdExistente) {
-          toast.error("Ingresa el ID del cliente existente");
-          return;
-        }
-        clienteId = Number(form.clienteIdExistente);
-        clienteNombre = `${form.nombre.trim()} ${form.apellido.trim()}`;
-        // Extraer dígitos limpios si hay formato
-        clienteTelefono = form.telefono.includes('+51') 
-          ? extraerDigitosTelefono(form.telefono)
-          : form.telefono.trim();
-        clienteEmail = form.email.trim();
+    } else {
+      if (!form.clienteIdExistente) {
+        toast.error("Ingresa el ID del cliente existente");
+        return null;
       }
+      clienteId = Number(form.clienteIdExistente);
+      clienteNombre = `${form.nombre.trim()} ${form.apellido.trim()}`;
+      clienteTelefono = form.telefono.includes("+51")
+        ? extraerDigitosTelefono(form.telefono)
+        : form.telefono.trim();
+      clienteEmail = form.email.trim();
+    }
 
-      // 2) Crear preferencia de pago con método preferido
+    return { clienteId, clienteNombre, clienteTelefono, clienteEmail };
+  };
+
+  const handleGeneratePaymentLink = async () => {
+    if (!plan) {
+      toast.error("Selecciona un plan");
+      return;
+    }
+    try {
+      const cliente = await resolverClienteParaPago();
+      if (!cliente) return;
+
       const response = await crearPreferencia({
-        clienteId,
+        clienteId: cliente.clienteId,
         planNombre: plan.nombre,
         planDias: plan.duracionDias,
         monto: total,
-        emailCliente: clienteEmail || "noemail@vipcenter.fit",
-        metodoPagoPreferido: metodoPago,
-        membresiaId: plan.id, // ✅ Vincular membresía con el pago
+        emailCliente: cliente.clienteEmail || "noemail@vipcenter.fit",
+        membresiaId: plan.id,
       });
 
-      // 3) Mostrar modal con enlaces de pago
       setPaymentData({
         url: response.initPoint,
-        clienteNombre,
-        clienteTelefono,
-        clienteEmail,
-        metodoPago,
+        clienteNombre: cliente.clienteNombre,
+        clienteTelefono: cliente.clienteTelefono,
+        clienteEmail: cliente.clienteEmail,
       });
       setShowPaymentLinks(true);
-      toast.success(`Enlace de pago generado exitosamente${metodoPago === 'yape' ? ' (optimizado para Yape)' : ''}`);
-
+      toast.success("Enlace de pago con tarjeta generado");
     } catch (e: unknown) {
-      const msg = (e instanceof Error) ? e.message : String(e);
+      const msg = e instanceof Error ? e.message : String(e);
       toast.error(msg || "Error al generar enlace de pago");
     }
   };
 
-  const handleShowYapeQR = async () => {
+  const handleOpenRegistrarManual = async () => {
+    if (!plan) {
+      toast.error("Selecciona un plan");
+      return;
+    }
     try {
-      // 1) Si es nueva, crea el cliente (solo si no se ha creado antes)
-      let clienteId: number;
-      let clienteEmail = '';
-
-      if (tipo === "nueva") {
-        // ✅ Si ya se creó un cliente en esta sesión, reutilizarlo
-        if (clienteCreado) {
-          clienteId = clienteCreado.id;
-          clienteEmail = clienteCreado.email;
-        } else {
-          // Validar campos obligatorios
-          if (!form.nombre.trim() || !form.apellido.trim() || !form.telefono.trim()) {
-            toast.error("Complete los campos obligatorios: Nombre, Apellido y Teléfono");
-            return;
-          }
-
-          // Validar formato de teléfono
-          const validacionTelefono = validarTelefono(form.telefono);
-
-          if (!validacionTelefono.valido) {
-            toast.error(validacionTelefono.mensaje);
-            return;
-          }
-
-          const nuevo = await ClientesApi.crear({
-            nombre: form.nombre.trim(),
-            apellido: form.apellido.trim(),
-            telefono: form.telefono.trim(),
-            email: form.email.trim(),
-          });
-          clienteId = nuevo.id;
-          clienteEmail = form.email.trim();
-
-          // ✅ Guardar el cliente creado para reutilizarlo
-          setClienteCreado({
-            id: clienteId,
-            nombre: `${form.nombre.trim()} ${form.apellido.trim()}`,
-            telefono: form.telefono.trim(),
-            email: clienteEmail,
-          });
-        }
-      } else {
-        if (!form.clienteIdExistente) {
-          toast.error("Ingresa el ID del cliente existente");
-          return;
-        }
-        clienteId = Number(form.clienteIdExistente);
-        clienteEmail = form.email.trim();
-      }
-
-      // 2) Mostrar modal de QR Yape
-      setYapeQRData({
-        clienteId,
-        clienteEmail,
-        monto: total,
-        planNombre: plan?.nombre || 'Membresía',
-        planDias: plan?.duracionDias || 30,
-        membresiaId: plan?.id, // ✅ Pasar ID de membresía
-      });
-      setShowYapeQR(true);
-
+      const cliente = await resolverClienteParaPago();
+      if (!cliente) return;
+      setManualPagoData({ clienteId: cliente.clienteId });
+      setShowRegistrarManual(true);
     } catch (e: unknown) {
-      const msg = (e instanceof Error) ? e.message : String(e);
-      toast.error(msg || "Error al preparar pago con QR");
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg || "Error al preparar registro de pago");
     }
   };
 
-  const handleYapeQRSuccess = async (response: { message?: string; clienteId?: number; [k: string]: unknown }) => {
-    toast.success(`Pago completado: ${response.message || 'Exitoso'}`);
-    setShowYapeQR(false);
-    setYapeQRData(null);
+  const handlePagoSuccess = async (response: { message?: string; clienteId?: number }) => {
+    setShowRegistrarManual(false);
+    setManualPagoData(null);
 
     // Obtener QR del cliente y mostrar modal de éxito
     if (response.clienteId) {
@@ -534,7 +479,7 @@ export default function Suscripcion() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>
-                  <span>El cliente <strong>realiza el pago en línea (Yape/Transferencia)</strong></span>
+                  <span><strong>Yape/Plin/Efectivo:</strong> pago en recepción con QR del gimnasio</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>
@@ -570,6 +515,11 @@ export default function Suscripcion() {
                     <p className="text-emerald-400 text-xs mt-1">✓ Formato correcto</p>
                   )}
                 </div>
+              </div>
+
+              {/* DNI y Email */}
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="DNI (Opcional)" value={form.dni || ''} onChange={(v)=>setForm({...form, dni:v})} placeholder="Ej. 74581236" />
                 <Input label="Email" value={form.email} onChange={(v)=>setForm({...form, email:v})}/>
               </div>
 
@@ -822,41 +772,32 @@ export default function Suscripcion() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {/* Opción principal: QR para escanear */}
               <button
-                onClick={handleShowYapeQR}
-                className="w-full py-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg"
+                onClick={handleOpenRegistrarManual}
+                disabled={!plan}
+                className="w-full py-4 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                📲 Generar QR de Yape (Escanear)
+                <Banknote className="w-5 h-5" />
+                Registrar pago manual (Yape / Plin / Efectivo)
               </button>
-              
-              {/* Opciones de enlace */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleGeneratePaymentLink('yape')}
-                  className="py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium transition-colors flex items-center justify-center gap-1 text-sm"
-                >
-                  <Smartphone className="w-4 h-4" /> Link Yape
-                </button>
-                <button
-                  onClick={() => handleGeneratePaymentLink('todos')}
-                  className="py-2 rounded-lg border border-emerald-600 text-emerald-300 hover:bg-emerald-600/10 font-medium transition-colors flex items-center justify-center gap-1 text-sm"
-                >
-                  <CreditCard className="w-4 h-4" /> Link Completo
-                </button>
-              </div>
+              <button
+                onClick={handleGeneratePaymentLink}
+                disabled={!plan}
+                className="w-full py-3 rounded-lg border border-emerald-600 text-emerald-300 hover:bg-emerald-600/10 font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <CreditCard className="w-4 h-4" />
+                Generar enlace de pago (Tarjeta — Mercado Pago)
+              </button>
             </div>
-            <div className="mt-2 text-xs text-slate-400 text-center">
-              <div className="font-medium text-purple-400 flex items-center justify-center gap-1">
-                <Flame className="w-3 h-3" /> QR Recomendado para pagos presenciales
-              </div>
-              <div className="mt-1">Los enlaces son para enviar por WhatsApp/Email</div>
-            </div>
+            <p className="mt-2 text-xs text-slate-400 text-center">
+              El enlace de tarjeta se puede enviar por WhatsApp o email
+            </p>
           </div>
         </div>
       </div>
     </div>
-    {showPaymentLinks && paymentData && (
+
+    {showPaymentLinks && paymentData && plan && (
       <PaymentLinks
         paymentUrl={paymentData.url}
         clienteNombre={paymentData.clienteNombre}
@@ -864,7 +805,6 @@ export default function Suscripcion() {
         clienteEmail={paymentData.clienteEmail}
         monto={total}
         planNombre={plan.nombre}
-        metodoPago={paymentData.metodoPago}
         onClose={() => {
           setShowPaymentLinks(false);
           setPaymentData(null);
@@ -872,19 +812,18 @@ export default function Suscripcion() {
       />
     )}
     
-    {showYapeQR && yapeQRData && plan && (
-      <YapeQRPayment
-        clienteId={yapeQRData.clienteId}
+    {showRegistrarManual && manualPagoData && plan && (
+      <RegistrarPagoManualModal
+        clienteId={manualPagoData.clienteId}
         monto={total}
         planNombre={plan.nombre}
         planDias={plan.duracionDias}
-        emailCliente={yapeQRData.clienteEmail}
         membresiaId={plan.id}
         onClose={() => {
-          setShowYapeQR(false);
-          setYapeQRData(null);
+          setShowRegistrarManual(false);
+          setManualPagoData(null);
         }}
-        onSuccess={handleYapeQRSuccess}
+        onSuccess={handlePagoSuccess}
       />
     )}
 

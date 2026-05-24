@@ -294,14 +294,9 @@ export default function GestionDescuentos() {
       {showModal && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-          onClick={() => {
-            setShowModal(false);
-            resetForm();
-          }}
         >
           <div
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className="bg-[#1A1F25] rounded-xl border border-white/10 shadow-2xl max-w-lg w-full"
+            className="bg-[#1A1F25] rounded-xl border border-white/10 shadow-2xl max-w-lg w-full overflow-hidden"
           >
             <div className="border-b border-white/10 px-6 py-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-white">
@@ -318,9 +313,10 @@ export default function GestionDescuentos() {
               </button>
             </div>
 
-              <div className="space-y-3">
+            <div className="p-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Nombre <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -328,12 +324,12 @@ export default function GestionDescuentos() {
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                     placeholder="Ej: Estudiante, Adulto Mayor"
-                    className="w-full px-3 py-2 text-sm bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 text-sm bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Porcentaje (%) <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -346,11 +342,11 @@ export default function GestionDescuentos() {
                       setFormData({ ...formData, porcentaje: parseFloat(e.target.value) || 0 })
                     }
                     placeholder="Ej: 20"
-                    className="w-full px-3 py-2 text-sm bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 text-sm bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-2">
                   <input
                     type="checkbox"
                     id="estado"
@@ -358,29 +354,30 @@ export default function GestionDescuentos() {
                     onChange={(e) => setFormData({ ...formData, estado: e.target.checked })}
                     className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-emerald-500 focus:ring-emerald-500"
                   />
-                  <label htmlFor="estado" className="text-sm text-slate-300 cursor-pointer">
+                  <label htmlFor="estado" className="text-sm font-medium text-slate-300 cursor-pointer">
                     Descuento activo
                   </label>
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-5">
+              <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  className="flex-1 px-4 py-2 border border-white/10 text-white rounded-lg hover:bg-white/5 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="flex-1 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors font-medium"
                 >
-                  {editingDescuento ? "Actualizar" : "Crear"}
+                  {editingDescuento ? "Actualizar" : "Crear Descuento"}
                 </button>
               </div>
+            </div>
           </div>
         </div>
       )}

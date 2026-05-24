@@ -1,6 +1,7 @@
 import { useAuthStore } from "../store/useAuthStore";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://vip-center-backend.onrender.com/api";
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:8080/api" : "https://vip-center-backend.onrender.com/api");
 const BASE_URL = `${API_BASE}/asistencia`;
 
 export interface Asistencia {
@@ -12,9 +13,9 @@ export interface Asistencia {
   latitud?: number;
   longitud?: number;
   notas?: string;
-  horaFormateada?: string; // Ej: "08:30 AM" (generado en frontend)
+  horaFormateada?: string;
 
-  // Cliente (objeto anidado que viene del backend)
+
   cliente: {
     id: number;
     nombre: string;
