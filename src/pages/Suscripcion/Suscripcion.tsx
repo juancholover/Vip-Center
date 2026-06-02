@@ -222,6 +222,7 @@ export default function Suscripcion() {
       apellido: string;
     };
     qrToken: string;
+    preferenceId?: string;
   } | null>(null);
 
   // Funciones para el modal de búsqueda de clientes
@@ -378,7 +379,7 @@ export default function Suscripcion() {
     }
   };
 
-  const handlePagoSuccess = async (response: { message?: string; clienteId?: number }) => {
+  const handlePagoSuccess = async (response: { message?: string; clienteId?: number; preferenceId?: string }) => {
     setShowRegistrarManual(false);
     setManualPagoData(null);
 
@@ -395,6 +396,7 @@ export default function Suscripcion() {
               apellido: form.apellido,
             },
             qrToken: cliente.qrAcceso,
+            preferenceId: response.preferenceId,
           });
           setShowModalQRExito(true);
         } else {
@@ -837,6 +839,7 @@ export default function Suscripcion() {
         }}
         cliente={datosQRExito.cliente}
         qrToken={datosQRExito.qrToken}
+        preferenceId={datosQRExito.preferenceId}
       />
     )}
     </>

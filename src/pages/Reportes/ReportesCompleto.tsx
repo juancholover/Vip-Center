@@ -246,7 +246,7 @@ export default function ReportesCompleto() {
           ReportesApi.obtenerAsistenciasRecientes(10),
           ReportesApi.obtenerMetricasComparativas(inicio, fin),
         ]);
-        setTendenciaAsistencias(rellenarFechasFaltantes(tendencia, inicio, fin));
+        setTendenciaAsistencias(tendencia);
         setHorasPico(horas);
         setTopClientes(top);
         setClientesAusentes(ausentes);
@@ -278,7 +278,7 @@ export default function ReportesCompleto() {
           ReportesApi.obtenerIngresosPorMetodo(inicio, fin),
           ReportesApi.obtenerRetencionMensual(),
         ]);
-        setTendenciaIngresos(rellenarFechasFaltantes(tendencia, inicio, fin));
+        setTendenciaIngresos(tendencia);
         setDistribucionIngresosPlan(distPlan);
         setHistorialPagos(historial);
         setMetricasIngresos(metricas.filter((m: MetricaComparativaDTO) => m.categoria === "ingreso"));
@@ -1343,7 +1343,7 @@ function VistaIngresos({
       {/* Métricas Clave */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
-          numero={metricaIngresosTotales?.valorActual || "S/. 0.00"}
+          numero={metricaIngresosTotales?.valorActual?.replace('$', 'S/ ') || "S/. 0.00"}
           label="INGRESOS TOTALES"
           tendencia={metricaIngresosTotales?.tendencia === "up" ? "positiva" : metricaIngresosTotales?.tendencia === "down" ? "negativa" : undefined}
           indicador={metricaIngresosTotales?.porcentajeCambio ? `${metricaIngresosTotales.porcentajeCambio > 0 ? '+' : ''}${metricaIngresosTotales.porcentajeCambio.toFixed(1)}%` : undefined}
@@ -1353,7 +1353,7 @@ function VistaIngresos({
           colorTexto="text-emerald-400"
         />
         <MetricCard
-          numero={metricaIngresosSemana?.valorActual || "S/. 0.00"}
+          numero={metricaIngresosSemana?.valorActual?.replace('$', 'S/ ') || "S/. 0.00"}
           label="INGRESOS ESTA SEMANA"
           tendencia={metricaIngresosSemana?.tendencia === "up" ? "positiva" : metricaIngresosSemana?.tendencia === "down" ? "negativa" : undefined}
           indicador={metricaIngresosSemana?.porcentajeCambio ? `${metricaIngresosSemana.porcentajeCambio > 0 ? '+' : ''}${metricaIngresosSemana.porcentajeCambio.toFixed(1)}%` : undefined}
@@ -1363,7 +1363,7 @@ function VistaIngresos({
           colorTexto="text-blue-400"
         />
         <MetricCard
-          numero={metricaIngresosHoy?.valorActual || "S/. 0.00"}
+          numero={metricaIngresosHoy?.valorActual?.replace('$', 'S/ ') || "S/. 0.00"}
           label="INGRESOS HOY"
           tendencia={metricaIngresosHoy?.tendencia === "up" ? "positiva" : metricaIngresosHoy?.tendencia === "down" ? "negativa" : undefined}
           indicador={metricaIngresosHoy?.porcentajeCambio ? `${metricaIngresosHoy.porcentajeCambio > 0 ? '+' : ''}${metricaIngresosHoy.porcentajeCambio.toFixed(1)}%` : undefined}

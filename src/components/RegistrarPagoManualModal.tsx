@@ -28,7 +28,7 @@ export default function RegistrarPagoManualModal({
     e.preventDefault();
     setLoading(true);
     try {
-      await registrarPagoManual(clienteId, {
+      const response = await registrarPagoManual(clienteId, {
         membresiaId,
         planDias,
         monto,
@@ -37,7 +37,7 @@ export default function RegistrarPagoManualModal({
       });
       toast.success(`Pago de S/ ${monto} registrado exitosamente (${metodoPago}).`);
       
-      onSuccess({ success: true, method: metodoPago });
+      onSuccess({ ...response, clienteId: response.clienteId || clienteId, success: true, method: metodoPago });
       onClose();
     } catch (error: any) {
       toast.error(error.message || "Error al registrar el pago.");

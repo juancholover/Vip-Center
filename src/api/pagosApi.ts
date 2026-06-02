@@ -62,5 +62,19 @@ export async function registrarPagoManual(
     const err = await res.json().catch(() => null);
     throw new Error((err && (err.message || err.error)) || "No se pudo registrar el pago manual");
   }
-  return res.json() as Promise<{ message?: string; clienteId?: number; [k: string]: unknown }>;
+  return res.json() as Promise<{ message?: string; clienteId?: number; preferenceId?: string; [k: string]: unknown }>;
+}
+
+export async function descargarComprobante(pagoId: string | number) {
+  const token = useAuthStore.getState().accessToken;
+  const res = await fetch(`${BASE_URL}/${pagoId}/comprobante`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error("No se pudo obtener el comprobante de pago");
+  }
+  return res.blob();
 }

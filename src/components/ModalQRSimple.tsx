@@ -1,7 +1,8 @@
-import { X, Download } from "lucide-react";
+import { X, Download, FileText } from "lucide-react";
 import { toast } from "react-hot-toast";
 import QRCode from "react-qr-code";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { descargarComprobante } from "../api/pagosApi";
 
 interface ModalQRSimpleProps {
   visible: boolean;
@@ -11,6 +12,7 @@ interface ModalQRSimpleProps {
     apellido: string;
   };
   qrToken: string; // El UUID del cliente (qr_acceso)
+  preferenceId?: string;
 }
 
 export default function ModalQRSimple({
@@ -18,12 +20,36 @@ export default function ModalQRSimple({
   onClose,
   cliente,
   qrToken,
+  preferenceId,
 }: ModalQRSimpleProps) {
   const qrRef = useRef<HTMLDivElement>(null);
   
   if (!visible) return null;
 
   const nombreCompleto = `${cliente.nombre} ${cliente.apellido}`.trim();
+  const [descargandoComprobante, setDescargandoComprobante] = useState(false);
+
+  const handleDescargarComprobante = async () => {
+    if (!preferenceId) return;
+    try {
+      setDescargandoComprobante(true);
+      const blob = await descargarComprobante(preferenceId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Comprobante_${nombreCompleto.replace(/\s+/g, "_")}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Comprobante descargado exitosamente");
+    } catch (error) {
+      console.error("Error al descargar comprobante:", error);
+      toast.error("Error al descargar comprobante");
+    } finally {
+      setDescargandoComprobante(false);
+    }
+  };
 
   // Descargar QR como imagen usando el SVG de react-qr-code
   const descargarQR = async () => {
@@ -121,14 +147,27 @@ export default function ModalQRSimple({
                 </p>
               </div>
 
-              {/* Botón de descarga */}
-              <button
-                onClick={descargarQR}
-                className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
-              >
-                <Download className="w-5 h-5" />
-                Descargar QR
-              </button>
+              {/* Botones de acción */}
+              <div className="space-y-3">
+                <button
+                  onClick={descargarQR}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+                >
+                  <Download className="w-5 h-5" />
+                  Descargar QR
+                </button>
+                
+                {preferenceId && (
+                  <button
+                    onClick={handleDescargarComprobante}
+                    disabled={descargandoComprobante}
+                    className="w-full py-3 px-6 border border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-400 rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <FileText className="w-5 h-5" />
+                    {descargandoComprobante ? "Descargando..." : "Descargar Comprobante PDF"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
