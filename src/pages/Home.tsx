@@ -47,6 +47,8 @@ export default function Home() {
     ingresosMes: 0,
     asistenciasHoy: 0,
     membresiasPorVencer: 0,
+    ingresosSuplementosMes: 0,
+    ingresosTotalesMes: 0,
   });
 
   const [ingresosSemana, setIngresosSemana] = useState<Array<{fecha: string; ingresos: number}>>([]);
@@ -57,6 +59,8 @@ export default function Home() {
   // Hook para animar números
   const clientesAnimado = useCountUp(stats.clientesActivos, 1500);
   const ingresoAnimado = useCountUp(stats.ingresosMes, 2000);
+  const suplementosAnimado = useCountUp(stats.ingresosSuplementosMes, 2000);
+  const totalAnimado = useCountUp(stats.ingresosTotalesMes, 2000);
   const asistenciasAnimado = useCountUp(stats.asistenciasHoy, 1800);
   const vencidasAnimado = useCountUp(stats.membresiasPorVencer, 1600);
 
@@ -86,6 +90,8 @@ export default function Home() {
           ingresosMes: 12450.0,
           asistenciasHoy: 42,
           membresiasPorVencer: 8,
+          ingresosSuplementosMes: 3200.0,
+          ingresosTotalesMes: 15650.0,
         })),
         DashboardApi.obtenerIngresosSemana().catch(() => [
           { fecha: "Lun", ingresos: 1200 },
@@ -191,13 +197,33 @@ export default function Home() {
       changePositive: true,
     },
     {
-      title: "Ingresos del Mes",
-      value: `S/ ${ingresoAnimado.toFixed(2)}`,
+      title: "Ingresos Totales Mes",
+      value: `S/ ${totalAnimado.toFixed(2)}`,
       icon: DollarSign,
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-500/10",
       textColor: "text-blue-400",
       change: "+18%",
+      changePositive: true,
+    },
+    {
+      title: "Ingresos Membresías",
+      value: `S/ ${ingresoAnimado.toFixed(2)}`,
+      icon: CreditCard,
+      color: "from-cyan-500 to-cyan-600",
+      bgColor: "bg-cyan-500/10",
+      textColor: "text-cyan-400",
+      change: "Mensual",
+      changePositive: true,
+    },
+    {
+      title: "Ingresos Suplementos",
+      value: `S/ ${suplementosAnimado.toFixed(2)}`,
+      icon: Dumbbell,
+      color: "from-violet-500 to-violet-600",
+      bgColor: "bg-violet-500/10",
+      textColor: "text-violet-400",
+      change: "Mensual",
       changePositive: true,
     },
     {
@@ -282,7 +308,7 @@ export default function Home() {
       </motion.div>
 
       {/* KPI Cards Grid - Compactas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         {kpiCards.map((card, index) => (
           <motion.div
             key={card.title}

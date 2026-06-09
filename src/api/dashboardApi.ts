@@ -6,6 +6,8 @@ export interface DashboardStats {
   asistenciasHoy: number;
   membresiasPorVencer: number;
   promedioDiario: number;
+  ingresosSuplementosMes: number;
+  ingresosTotalesMes: number;
 }
 
 export interface IngresosDia {

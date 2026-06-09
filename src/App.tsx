@@ -15,6 +15,11 @@ import NotificacionesConfig from "./pages/Configuracion/NotificacionesConfig";
 import ControlAcceso from "./pages/ControlAcceso";
 import Recepcion from "./pages/Recepcion/Recepcion";
 import ClientesInactivos from "./pages/Clientes/ClientesInactivos";
+import Productos from "./pages/Inventario/Productos";
+import VentasSuplementos from "./pages/Inventario/VentasSuplementos";
+import Stock from "./pages/Inventario/Stock";
+import ReportesSuplementos from "./pages/Inventario/ReportesSuplementos";
+import SeleccionModulo from "./pages/SeleccionModulo";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Notification } from "./components/Notification";
 
@@ -24,6 +29,16 @@ export default function App() {
       <Routes>
         {/* 🔓 Público */}
         <Route path="/login" element={<Login />} />
+
+        {/* 🔐 Selección de módulo */}
+        <Route
+          path="/seleccion"
+          element={
+            <ProtectedRoute>
+              <SeleccionModulo />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 🔐 Cambiar contraseña */}
         <Route
@@ -44,6 +59,9 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          {/* ═══════════════════════════════════════ */}
+          {/* BLOQUE A: GESTIÓN (existing routes)     */}
+          {/* ═══════════════════════════════════════ */}
           <Route index element={<Home />} />
           <Route path="asistencia" element={<AsistenciaModule />} />
           <Route path="control-acceso" element={<ControlAcceso />} />
@@ -96,6 +114,42 @@ export default function App() {
             element={
               <ProtectedRoute roles={["ROLE_ADMIN"]}>
                 <NotificacionesConfig />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ═══════════════════════════════════════ */}
+          {/* BLOQUE B: INVENTARIO (supplements)       */}
+          {/* ═══════════════════════════════════════ */}
+          <Route
+            path="inventario/productos"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
+                <Productos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventario/ventas"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
+                <VentasSuplementos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventario/stock"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <Stock />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventario/reportes"
+            element={
+              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+                <ReportesSuplementos />
               </ProtectedRoute>
             }
           />
