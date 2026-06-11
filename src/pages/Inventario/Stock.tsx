@@ -3,11 +3,16 @@ import { Warehouse, Package, AlertTriangle, Plus } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useStockStore } from "../../store/useStockStore";
 import { useProductosStore } from "../../store/useProductosStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import { ProductosApi, Producto } from "../../api/productosApi";
 import { StockApi, CrearEntradaStockRequest } from "../../api/stockApi";
 import { Card } from "../../components/ui/Card";
 
 export default function Stock() {
+  const { user } = useAuthStore();
+  const permisos = user?.permisos || [];
+  const canManageStock = permisos.some((p) => p.codigo === "suplementos.stock");
+
   const {
     alertas,
     setAlertas,
@@ -95,13 +100,15 @@ export default function Stock() {
           </h1>
           <p className="text-sm text-slate-400 mt-1">Entradas de stock y alertas de inventario</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Nueva Entrada
-        </button>
+        {canManageStock && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva Entrada
+          </button>
+        )}
       </div>
 
       {/* Entry Form */}

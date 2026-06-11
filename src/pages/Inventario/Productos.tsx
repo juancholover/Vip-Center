@@ -13,8 +13,12 @@ import { Card } from "../../components/ui/Card";
 
 export default function Productos() {
   const { user } = useAuthStore();
-  const roles = user?.roles || [];
-  const isAdmin = roles.some((r: string) => r.toLowerCase().includes("admin"));
+  const permisos = user?.permisos || [];
+  const permisosCodigos = permisos.map((p) => p.codigo);
+  const canCreateProducts = permisosCodigos.includes("suplementos.crear");
+  const canEditProducts = permisosCodigos.includes("suplementos.editar");
+  const canDeactivateProducts = permisosCodigos.includes("suplementos.desactivar");
+  const canManageProducts = canCreateProducts || canEditProducts || canDeactivateProducts;
 
   const {
     productos,
@@ -175,7 +179,7 @@ export default function Productos() {
             Catálogo de Productos
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            {isAdmin ? "Gestiona el catálogo de suplementos" : "Consulta productos disponibles"}
+            {canManageProducts ? "Gestiona el catálogo de suplementos" : "Consulta productos disponibles"}
           </p>
         </div>
       </div>
@@ -200,7 +204,7 @@ export default function Productos() {
           >
             Refrescar
           </button>
-          {isAdmin && (
+          {canCreateProducts && (
             <button
               onClick={() => abrirModal()}
               className="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition-colors"
@@ -231,7 +235,7 @@ export default function Productos() {
                   <th className="text-right py-2 px-3 text-slate-400 font-medium text-xs">Precio</th>
                   <th className="text-right py-2 px-3 text-slate-400 font-medium text-xs">Stock</th>
                   <th className="text-center py-2 px-3 text-slate-400 font-medium text-xs">Estado</th>
-                  {isAdmin && (
+                  {canManageProducts && (
                     <th className="text-right py-2 px-3 text-slate-400 font-medium text-xs">Acciones</th>
                   )}
                 </tr>
@@ -274,17 +278,19 @@ export default function Productos() {
                         </span>
                       )}
                     </td>
-                    {isAdmin && (
+                    {canManageProducts && (
                       <td className="py-2 px-3">
                         <div className="flex justify-end gap-1">
-                          <button
-                            onClick={() => abrirModal(producto)}
-                            className="p-1.5 hover:bg-blue-600/20 text-blue-400 rounded"
-                            title="Editar"
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-                          {producto.activo && (
+                          {canEditProducts && (
+                            <button
+                              onClick={() => abrirModal(producto)}
+                              className="p-1.5 hover:bg-blue-600/20 text-blue-400 rounded"
+                              title="Editar"
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {canDeactivateProducts && producto.activo && (
                             <button
                               onClick={() => handleDesactivar(producto.id)}
                               className="p-1.5 hover:bg-red-600/20 text-red-400 rounded"

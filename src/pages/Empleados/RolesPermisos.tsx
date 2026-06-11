@@ -224,7 +224,7 @@ export default function RolesPermisos() {
                           key={permiso.id}
                           className="px-2 py-0.5 bg-purple-600/20 text-purple-400 rounded text-xs"
                         >
-                          {permiso.nombre.split(".")[1] || permiso.nombre}
+                          {permiso.nombre}
                         </span>
                       ))}
                       {rol.permisos.length > 5 && (

@@ -28,8 +28,8 @@ if (data.debeCambiarPassword) {
   console.warn("⚠️ Usuario debe cambiar su contraseña antes de continuar");
   navigate("/cambiar-password");
 } else {
-  // ✅ Ir a selección de módulo
-  navigate("/seleccion");
+  // ✅ Ir al dashboard principal
+  navigate("/");
 }
     } catch (err: unknown) {
       // Manejo de errores específicos

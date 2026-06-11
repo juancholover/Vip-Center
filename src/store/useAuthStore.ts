@@ -1,6 +1,11 @@
 import { create } from "zustand";
-import { refreshRequest, logoutRequest, LoginResponse } from "../api/authApi";
+import { refreshRequest, logoutRequest, LoginResponse, getMeRequest } from "../api/authApi";
 import { axiosClient } from "../api/axiosClient";
+
+interface PermisoDetalle {
+  codigo: string;
+  nombre: string;
+}
 
 interface UserData {
   email: string;
@@ -8,6 +13,7 @@ interface UserData {
   apellido: string;
   telefono?: string;
   roles: string[];
+  permisos: PermisoDetalle[];
   debeCambiarPassword: boolean;
 }
 
@@ -20,6 +26,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshSession: () => Promise<string | null>;
   loadSession: () => Promise<void>;
+  syncUserFromServer: () => Promise<void>;
   updateDebeCambiarPassword: (value: boolean) => void;
   updateUserProfile: (nombre: string, apellido: string, email: string, telefono?: string) => void;
 }
@@ -42,6 +49,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       apellido: data.apellido,
       telefono: data.telefono,
       roles: Array.from(data.roles || []),
+      permisos: (data.permisos || []).map(p =>
+        typeof p === "string" ? { codigo: p, nombre: p } : p
+      ),
       debeCambiarPassword: data.debeCambiarPassword || false,
     };
 
@@ -102,6 +112,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         apellido: res.apellido,
         telefono: res.telefono,
         roles: Array.from(res.roles || []),
+        permisos: (res.permisos || []).map(p =>
+          typeof p === "string" ? { codigo: p, nombre: p } : p
+        ),
         debeCambiarPassword: res.debeCambiarPassword || false,
       };
 
@@ -144,7 +157,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         axiosClient.defaults.headers.Authorization = `Bearer ${token}`;
 
         set({
-          user: parsed,
+          user: {
+            ...parsed,
+            permisos: parsed.permisos || [],
+          },
           accessToken: token,
           refreshToken: refresh,
           loading: false,
@@ -155,6 +171,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } else {
       set({ loading: false });
+    }
+  },
+
+  // ===============================
+  // 🔄 SINCRONIZAR USUARIO DESDE EL SERVIDOR
+  // ===============================
+  syncUserFromServer: async () => {
+    const { accessToken, user } = get();
+    if (!accessToken || !user) return;
+
+    try {
+      const meData = await getMeRequest();
+
+      const updatedUser: UserData = {
+        email: meData.email || user.email,
+        nombre: meData.nombre || user.nombre,
+        apellido: meData.apellido || user.apellido,
+        telefono: meData.telefono || user.telefono,
+        roles: Array.from(meData.roles || user.roles),
+        permisos: (meData.permisos || []).map((p: { codigo: string; nombre: string } | string) =>
+          typeof p === "string" ? { codigo: p, nombre: p } : p
+        ),
+        debeCambiarPassword: meData.debeCambiarPassword ?? user.debeCambiarPassword,
+      };
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      set({ user: updatedUser });
+    } catch (err: unknown) {
+      // Silently ignore — don't break the UX if sync fails
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("⚠️ Error al sincronizar usuario:", msg);
     }
   },
 

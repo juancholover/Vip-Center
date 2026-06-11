@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
 import Layout from "./components/layout/Layout";
 import Login from "./pages/Auth/Login";
 import ChangePassword from "./pages/Auth/ChangePassword";
@@ -19,26 +20,54 @@ import Productos from "./pages/Inventario/Productos";
 import VentasSuplementos from "./pages/Inventario/VentasSuplementos";
 import Stock from "./pages/Inventario/Stock";
 import ReportesSuplementos from "./pages/Inventario/ReportesSuplementos";
-import SeleccionModulo from "./pages/SeleccionModulo";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Notification } from "./components/Notification";
+import { useAuthStore } from "./store/useAuthStore";
 
 export default function App() {
+  const { accessToken, loadSession, syncUserFromServer } = useAuthStore();
+
+  // Sync user data from server on mount and periodically
+  useEffect(() => {
+    loadSession().then(() => {
+      // After loading session, do an initial sync if logged in
+      const token = useAuthStore.getState().accessToken;
+      if (token) {
+        syncUserFromServer();
+      }
+    });
+
+    // Listen for tab visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const token = useAuthStore.getState().accessToken;
+        if (token) {
+          syncUserFromServer();
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Periodic sync every 60 seconds
+    const intervalId = setInterval(() => {
+      const token = useAuthStore.getState().accessToken;
+      if (token) {
+        syncUserFromServer();
+      }
+    }, 60000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <Routes>
         {/* 🔓 Público */}
         <Route path="/login" element={<Login />} />
-
-        {/* 🔐 Selección de módulo */}
-        <Route
-          path="/seleccion"
-          element={
-            <ProtectedRoute>
-              <SeleccionModulo />
-            </ProtectedRoute>
-          }
-        />
 
         {/* 🔐 Cambiar contraseña */}
         <Route
@@ -140,7 +169,7 @@ export default function App() {
           <Route
             path="inventario/stock"
             element={
-              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+              <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
                 <Stock />
               </ProtectedRoute>
             }
@@ -148,7 +177,7 @@ export default function App() {
           <Route
             path="inventario/reportes"
             element={
-              <ProtectedRoute roles={["ROLE_ADMIN"]}>
+              <ProtectedRoute roles={["ROLE_ADMIN", "ROLE_RECEPCIONISTA"]}>
                 <ReportesSuplementos />
               </ProtectedRoute>
             }

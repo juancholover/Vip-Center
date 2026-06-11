@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -74,10 +74,13 @@ function SidebarSection({
 
   // Abrir si alguna ruta hija está activa
   useEffect(() => {
-    const childPaths = (children as React.ReactElement[])
-      ?.filter((child) => child?.props?.to)
-      .map((child) => child.props.to as string);
-    if (childPaths?.some((p) => location.pathname === p || (p !== "/" && location.pathname.startsWith(p)))) {
+    const childElements = React.Children.toArray(children).filter(
+      (child): child is React.ReactElement => React.isValidElement(child)
+    );
+    const childPaths = childElements
+      .filter((child) => (child.props as Record<string, unknown>).to)
+      .map((child) => (child.props as Record<string, string>).to);
+    if (childPaths.some((p) => location.pathname === p || (p !== "/" && location.pathname.startsWith(p)))) {
       setOpen(true);
     }
   }, [location.pathname, children]);

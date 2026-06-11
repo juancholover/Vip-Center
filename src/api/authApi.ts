@@ -14,7 +14,7 @@ export interface LoginResponse {
   apellido: string;
   telefono?: string;
   roles: string[];
-  permisos?: string[];
+  permisos?: Array<{ codigo: string; nombre: string }>;
   debeCambiarPassword: boolean;
 }
 

@@ -30,7 +30,7 @@ export default function Empleados() {
   } = useEmpleadosStore();
   
   const [tabActiva, setTabActiva] = useState<"empleados" | "roles">("empleados");
-  const [filtro, setFiltro] = useState<"todos" | "activos" | "inactivos">("todos");
+  const [filtro, setFiltro] = useState<"todos" | "activos" | "inactivos">("activos");
   const [filtroRol, setFiltroRol] = useState<number | "todos">("todos");
   const [busqueda, setBusqueda] = useState("");
   
@@ -274,6 +274,20 @@ export default function Empleados() {
         ? prev.permisosIds.filter((id) => id !== permisoId)
         : [...prev.permisosIds, permisoId],
     }));
+  };
+
+  const handleSelectAllModulo = (modulo: string, permisosModulo: Permiso[]) => {
+    setFormDataRol((prev) => {
+      const idsModulo = permisosModulo.map((p) => p.id);
+      const todosSeleccionados = idsModulo.every((id) => prev.permisosIds.includes(id));
+      if (todosSeleccionados) {
+        // Deseleccionar todos los del módulo
+        return { ...prev, permisosIds: prev.permisosIds.filter((id) => !idsModulo.includes(id)) };
+      }
+      // Seleccionar todos los del módulo (sin duplicar los ya seleccionados)
+      const nuevos = idsModulo.filter((id) => !prev.permisosIds.includes(id));
+      return { ...prev, permisosIds: [...prev.permisosIds, ...nuevos] };
+    });
   };
 
   const handleSubmitRol = async (e: React.FormEvent) => {
@@ -619,7 +633,7 @@ export default function Empleados() {
                     <div className="flex flex-wrap gap-1">
                       {rol.permisos.slice(0, 4).map((permiso) => (
                         <span key={permiso.id} className="px-1.5 py-0.5 bg-purple-600/20 text-purple-400 rounded text-xs">
-                          {permiso.nombre.split(" ")[0]}
+                          {permiso.nombre}
                         </span>
                       ))}
                       {rol.permisos.length > 4 && (
@@ -850,8 +864,23 @@ export default function Empleados() {
                 <label className="block text-xs text-slate-400 mb-2">Permisos *</label>
                 <div className="space-y-2">
                   {Object.entries(permisosPorModulo).map(([modulo, permisosModulo]) => (
-                    <div key={modulo} className="bg-[#0F1318] rounded p-2">
-                      <h4 className="text-white font-medium text-xs mb-1.5 capitalize">{modulo}</h4>
+                <div key={modulo} className="bg-[#0F1318] rounded p-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <h4 className="text-white font-medium text-xs capitalize">{modulo}</h4>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectAllModulo(modulo, permisosModulo)}
+                      className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                        permisosModulo.every((p) => formDataRol.permisosIds.includes(p.id))
+                          ? "bg-purple-600/30 text-purple-300 hover:bg-purple-600/50"
+                          : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-300"
+                      }`}
+                    >
+                      {permisosModulo.every((p) => formDataRol.permisosIds.includes(p.id))
+                        ? "Deseleccionar todos"
+                        : "Seleccionar todos"}
+                    </button>
+                  </div>
                       <div className="grid grid-cols-2 gap-1">
                         {permisosModulo.map((permiso) => (
                           <label key={permiso.id} className="flex items-center gap-1.5 cursor-pointer hover:bg-white/5 p-1 rounded text-xs">
